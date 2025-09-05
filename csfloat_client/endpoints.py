@@ -36,9 +36,30 @@ def get_listings_page(**filters: Any) -> ListingsPage:
     params = build_query(filters)
     res = request("GET", LISTINGS_PATH, params=params)
     data = res.response.json()
-    if not isinstance(data, list):
+    items_payload: Optional[list] = None
+    if isinstance(data, list):
+        items_payload = data
+    elif isinstance(data, dict):
+        # Intentar extraer desde claves comunes
+        for key in ("listings", "items", "results"):
+            val = data.get(key)
+            if isinstance(val, list):
+                items_payload = val
+                break
+        # A veces la carga útil viene anidada en "data"
+        if items_payload is None:
+            inner = data.get("data")
+            if isinstance(inner, dict):
+                for key in ("listings", "items", "results"):
+                    val = inner.get(key)
+                    if isinstance(val, list):
+                        items_payload = val
+                        break
+            elif isinstance(inner, list):
+                items_payload = inner
+    if items_payload is None:
         raise ValueError("Respuesta inesperada: se esperaba una lista de listings")
-    items = [Listing.model_validate(obj) for obj in data]
+    items = [Listing.model_validate(obj) for obj in items_payload]
 
     next_cursor = _extract_next_cursor(res.response.headers)
     return ListingsPage(items=items, next_cursor=next_cursor)

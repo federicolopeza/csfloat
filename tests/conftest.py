@@ -14,6 +14,8 @@ def _no_sleep_and_reset_env(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("CSFLOAT_TEST_NO_SLEEP", "1")
     # Base por defecto
     monkeypatch.setenv("CSFLOAT_BASE", "https://csfloat.com")
+    # Ignorar .env para no filtrar Authorization durante los tests
+    monkeypatch.setenv("CSFLOAT_IGNORE_DOTENV", "1")
     # Quitar API key por defecto
     monkeypatch.delenv("CSFLOAT_API_KEY", raising=False)
     # Resetear cache de settings en cada test

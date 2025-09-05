@@ -27,8 +27,9 @@ def _validate_base_url(url: str) -> str:
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
     """Carga variables desde .env y entorno, con defaults seguros."""
-    # Cargar .env si existe
-    load_dotenv(override=False)
+    # Cargar .env si existe, salvo que se pida ignorarlo (útil en tests)
+    if os.getenv("CSFLOAT_IGNORE_DOTENV") != "1":
+        load_dotenv(override=False)
 
     base = os.getenv("CSFLOAT_BASE", "https://csfloat.com")
     api_key = os.getenv("CSFLOAT_API_KEY")

@@ -92,6 +92,9 @@ pytest
 ```
 
 - Cobertura objetivo: ≥80% en `csfloat_client/http.py` y `csfloat_client/endpoints.py`; ≥70% global.
+  - La cobertura excluye `csfloat_client/cli.py` por ser interfaz de línea de comandos.
+
+> Nota: durante las pruebas, el fixture de `tests/conftest.py` establece `CSFLOAT_IGNORE_DOTENV=1` para evitar cargar `.env` y así no inyectar `Authorization` por accidente. Configurá tu `.env` solo para ejecutar ejemplos o la CLI real.
 
 ## Referencias
 - Introducción y autenticación: https://docs.csfloat.com/#introduction

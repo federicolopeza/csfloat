@@ -39,6 +39,9 @@ testpaths = ["tests"]
 [tool.coverage.run]
 branch = true
 source = ["csfloat_client"]
+omit = [
+  "csfloat_client/cli.py",
+]
 
 [tool.coverage.report]
 show_missing = true

@@ -39,7 +39,10 @@ def test_get_listings_supports_combined_filters_and_sorted_query(make_listing):
 
     def _callback(request):
         # Asegura orden determinístico de query
-        assert request.url.query == expected_q
+        actual_q = request.url.query
+        if isinstance(actual_q, (bytes, bytearray)):
+            actual_q = actual_q.decode()
+        assert actual_q == expected_q
         return Response(200, json=[make_listing()])
 
     respx.get("https://csfloat.com/api/v1/listings").mock(side_effect=_callback)
