@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { useFilters } from './useFilters'
 import { getListings } from '../lib/api/csfloat'
+import { demoListings } from '../lib/demo-data'
 import type { Listing, ListingsResponse } from '../lib/models/types'
 
 export function useListings() {
@@ -33,8 +34,17 @@ export function useListings() {
   const query = useInfiniteQuery<ListingsResponse, Error, ListingsResponse, readonly [string, typeof baseParams], string | undefined>({
     queryKey: ['listings', baseParams],
     queryFn: async ({ pageParam }: { pageParam?: string }) => {
-      const res = await getListings({ ...baseParams, cursor: pageParam })
-      return res
+      // For demo purposes, return demo data
+      await new Promise(resolve => setTimeout(resolve, 800)) // Simulate API delay
+      return {
+        data: demoListings,
+        cursor: pageParam ? undefined : 'demo-cursor-123', // Simulate pagination
+        total_count: demoListings.length
+      }
+      
+      // Uncomment this line to use real API:
+      // const res = await getListings({ ...baseParams, cursor: pageParam })
+      // return res
     },
     getNextPageParam: (lastPage: ListingsResponse) => lastPage.cursor ?? undefined,
     initialPageParam: undefined,

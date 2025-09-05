@@ -53,6 +53,27 @@ apps/csfloat-dash/
 - La API key nunca llega al cliente; si está definida en `.env`, el proxy agrega `Authorization`.
 - No subir `.env` ni secretos al repo. `.env` ya está git-ignored.
 
+## 🎨 Premium Design Features
+
+### Visual Design System
+- **Modern Glass Morphism**: Sophisticated backdrop blur effects and transparency layers
+- **Premium Color Palette**: Carefully crafted gradients and color schemes inspired by CSFloat
+- **Advanced Typography**: Inter font family with proper weight hierarchy  
+- **Smooth Animations**: Float, glow, shimmer, and transition effects throughout
+- **Responsive Layout**: Adaptive design that works seamlessly on all devices
+
+### Component Highlights
+- **ListingCard**: Premium card design with hover effects, badges, and detailed information display
+- **FiltersPanel**: Collapsible sections with glass morphism and advanced input styling
+- **Toolbar**: Sophisticated header with gradient branding and live market indicators
+- **ListingsGrid**: Responsive grid with loading skeletons and elegant empty states
+
+### Interactive Elements
+- **Hover Effects**: Subtle transforms, shadows, and color transitions
+- **Loading States**: Shimmer effects and skeleton screens for better UX
+- **Error Handling**: Beautiful error states with retry functionality
+- **Mobile Experience**: Drawer-based filters with backdrop blur
+
 ## Próximos pasos
 
 - Completar `FiltersPanel` con TODOS los parámetros (min/max_float, category, def_index[], stickers, etc.) y validaciones Zod.

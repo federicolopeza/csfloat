@@ -32,30 +32,28 @@ type FiltersState = ListingsParams & {
   setSortBy: (s: SortOption) => void
   setMarketHashName: (v: string) => void
   setLimit: (n: number) => void
+  patch: (p: Partial<ListingsParams>) => void
   reset: () => void
   apply: () => void
   getParams: () => ListingsParams
 }
 
-const initial: FiltersState = {
+type FiltersData = ListingsParams & { appliedAt: number; errors: Record<string, string> }
+
+const initialData: FiltersData = {
   limit: 50,
   sort_by: 'most_recent',
   appliedAt: 0,
   errors: {},
-  setSortBy: () => {},
-  setMarketHashName: () => {},
-  setLimit: () => {},
-  reset: () => {},
-  apply: () => {},
-  getParams: () => ({}),
 }
 
 export const useFilters = create<FiltersState>((set, get) => ({
-  ...initial,
+  ...initialData,
   setSortBy: (s) => set({ sort_by: s }),
   setMarketHashName: (v) => set({ market_hash_name: v }),
   setLimit: (n) => set({ limit: Math.min(50, Math.max(1, Math.floor(n))) }),
-  reset: () => set({ ...initial, appliedAt: Date.now() }),
+  patch: (p) => set(p as Partial<FiltersState>),
+  reset: () => set((state) => ({ ...state, ...initialData, appliedAt: Date.now() })),
   apply: () => {
     const state = get()
     const { success, error, data } = schema.safeParse(state)
