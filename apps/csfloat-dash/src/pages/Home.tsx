@@ -35,18 +35,11 @@ export default function Home() {
   }, [showMobileFilters])
 
   return (
-    <div className="min-h-screen bg-gradient-dark">
-      {/* Background Effects */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl animate-float"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent-500/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }}></div>
-        <div className="absolute top-3/4 left-1/2 w-64 h-64 bg-secondary-500/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '4s' }}></div>
-      </div>
-
-      <div className="relative z-10 min-h-screen grid grid-cols-1 lg:grid-cols-[400px_1fr]">
+    <div className="min-h-screen bg-background">
+      <div className="min-h-screen grid grid-cols-1 lg:grid-cols-[400px_1fr]">
         {/* Desktop Sidebar */}
-        <aside className="hidden lg:block border-r border-white/10 sticky top-0 h-screen overflow-hidden">
-          <div className="h-full glass">
+        <aside className="hidden lg:block border-r border-border sticky top-0 h-screen overflow-hidden">
+          <div className="h-full surface-0">
             <FiltersPanel />
           </div>
         </aside>
@@ -56,21 +49,21 @@ export default function Home() {
           <div className="lg:hidden fixed inset-0 z-50 flex">
             {/* Backdrop */}
             <div
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              className="absolute inset-0 overlay"
               onClick={() => setShowMobileFilters(false)}
             />
 
             {/* Drawer */}
-            <div className="relative w-full max-w-sm bg-dark-950 border-r border-white/10 animate-slide-up">
-              <div className="h-full glass-dark">
+            <div className="relative w-full max-w-sm bg-background border-r border-border animate-slide-up">
+              <div className="h-full surface-0">
                 {/* Mobile Header */}
-                <div className="flex items-center justify-between p-4 border-b border-white/10">
-                  <h2 className="text-lg font-bold text-white">Filters</h2>
+                <div className="flex items-center justify-between p-4 border-b border-border">
+                  <h2 className="text-lg font-bold text-foreground">Filters</h2>
                   <button
                     onClick={() => setShowMobileFilters(false)}
-                    className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                    className="p-2 rounded-lg hover:bg-surface-1 transition-colors"
                   >
-                    <X size={20} className="text-gray-400" />
+                    <X size={20} className="text-muted-foreground" />
                   </button>
                 </div>
 
@@ -113,20 +106,20 @@ export default function Home() {
           </div>
 
           {/* Footer */}
-          <footer className="mt-auto p-6 border-t border-white/5">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
+          <footer className="mt-auto p-6 border-t border-border">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-4">
                 <span>© 2024 CSFloat Search Dashboard</span>
                 <span>•</span>
                 <span>Powered by CSFloat API</span>
               </div>
               <div className="flex items-center gap-4">
-                <a href="https://docs.csfloat.com" target="_blank" rel="noreferrer" className="hover:text-primary-400 transition-colors">
+                <a href="https://docs.csfloat.com" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors">
                   API Docs
                 </a>
                 <span>•</span>
                 <span className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+                  <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
                   Live Data
                 </span>
               </div>

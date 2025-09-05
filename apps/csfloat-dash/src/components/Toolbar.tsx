@@ -35,18 +35,18 @@ export default function Toolbar(props: ToolbarProps) {
   const currentSort = sortOptions.find(option => option.value === sortBy)
 
   return (
-    <div className="glass rounded-2xl p-6 mb-8 border border-white/10">
+    <div className="surface-1 rounded-2xl p-6 mb-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold text-primary">
             CSFloat Market
           </h1>
-          <p className="text-gray-400 mt-1">Discover and explore CS2 skins</p>
+          <p className="text-muted-foreground mt-1">Discover and explore CS2 skins</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="px-3 py-1.5 bg-gradient-accent/20 text-accent-300 rounded-full text-sm font-medium flex items-center gap-2">
-            <div className="w-2 h-2 bg-accent-400 rounded-full animate-pulse"></div>
+          <div className="badge badge-info flex items-center gap-2">
+            <div className="w-2 h-2 bg-info rounded-full animate-pulse"></div>
             Live Market
           </div>
         </div>
@@ -56,8 +56,8 @@ export default function Toolbar(props: ToolbarProps) {
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Search Bar */}
         <div className="flex-1 relative">
-          <div className={`relative transition-all duration-300 ${isSearchFocused ? 'transform scale-[1.02]' : ''}`}>
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 z-10" size={20} />
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground z-10" size={20} />
             <input
               type="text"
               placeholder="Search by weapon name (e.g., AK-47 | Redline)..."
@@ -65,12 +65,12 @@ export default function Toolbar(props: ToolbarProps) {
               onChange={(e) => handleSearch(e.target.value)}
               onFocus={() => setIsSearchFocused(true)}
               onBlur={() => setIsSearchFocused(false)}
-              className="input-premium w-full pl-12 pr-4 py-4 text-lg placeholder:text-gray-500"
+              className="input w-full pl-12 pr-4 py-4 text-lg"
             />
             {searchValue && (
               <button
                 onClick={() => handleSearch('')}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
               >
                 ×
               </button>
@@ -83,17 +83,17 @@ export default function Toolbar(props: ToolbarProps) {
           <select
             value={sortBy}
             onChange={(e) => onSortChange(e.target.value as SortOption)}
-            className="input-premium pl-12 pr-8 py-4 min-w-[200px] appearance-none cursor-pointer"
+            className="input pl-12 pr-8 py-4 min-w-[200px] appearance-none cursor-pointer"
           >
             {sortOptions.map((option) => (
-              <option key={option.value} value={option.value} className="bg-dark-800">
+              <option key={option.value} value={option.value} className="bg-surface-1">
                 {option.label}
               </option>
             ))}
           </select>
-          <SortAsc className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" size={20} />
+          <SortAsc className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground pointer-events-none" size={20} />
           <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
-            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </div>
@@ -110,17 +110,17 @@ export default function Toolbar(props: ToolbarProps) {
       </div>
 
       {/* Quick Stats */}
-      <div className="flex flex-wrap gap-4 mt-6 pt-6 border-t border-white/5">
-        <div className="flex items-center gap-2 text-sm text-gray-400">
-          <div className="w-2 h-2 bg-emerald-400 rounded-full"></div>
+      <div className="flex flex-wrap gap-4 mt-6 pt-6 border-t border-border">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="w-2 h-2 bg-success rounded-full"></div>
           <span>Real-time pricing</span>
         </div>
-        <div className="flex items-center gap-2 text-sm text-gray-400">
-          <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="w-2 h-2 bg-primary rounded-full"></div>
           <span>Advanced filtering</span>
         </div>
-        <div className="flex items-center gap-2 text-sm text-gray-400">
-          <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="w-2 h-2 bg-info rounded-full"></div>
           <span>Market insights</span>
         </div>
       </div>

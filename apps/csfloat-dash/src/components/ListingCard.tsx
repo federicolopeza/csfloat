@@ -40,38 +40,38 @@ export default function ListingCard({ listing, highlightFloat = false }: Listing
   const wearGradient = getWearGradient(item.wear_name)
   
   return (
-    <div className="group card-premium p-0 overflow-hidden hover:scale-[1.02] transition-all duration-300">
+    <div className="group card p-0 overflow-hidden transition-all duration-200">
       {/* Header with price and badges */}
       <div className="relative p-4 pb-3">
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1 pr-4">
-            <h3 className="font-semibold text-white text-sm leading-tight mb-2 group-hover:text-primary-300 transition-colors">
+            <h3 className="font-semibold text-foreground text-sm leading-tight mb-2 group-hover:text-primary transition-colors">
               {item.market_hash_name}
             </h3>
             <div className="flex flex-wrap gap-1.5">
               {isStatTrak && (
-                <span className="badge-stattrak px-2 py-0.5 rounded-full text-xs font-bold">
+                <span className="badge badge-stattrak">
                   ST™
                 </span>
               )}
               {isSouvenir && (
-                <span className="badge-souvenir px-2 py-0.5 rounded-full text-xs font-bold">
+                <span className="badge badge-souvenir">
                   Souvenir
                 </span>
               )}
               {highlightFloat && item.float_value && item.float_value <= 0.07 && (
-                <span className="badge-float-highlight px-2 py-0.5 rounded-full text-xs font-bold">
+                <span className="badge badge-float-highlight">
                   Low Float
                 </span>
               )}
             </div>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold bg-gradient-accent bg-clip-text text-transparent">
-              {centsToUSD(listing.price)}
+            <div className="text-2xl font-bold text-primary">
+              ${centsToUSD(listing.price)}
             </div>
             {listing.watchers && listing.watchers > 0 && (
-              <div className="flex items-center justify-end gap-1 text-xs text-gray-400 mt-1">
+              <div className="flex items-center justify-end gap-1 text-xs text-muted-foreground mt-1">
                 <Users size={12} />
                 <span>{listing.watchers}</span>
               </div>
@@ -84,33 +84,33 @@ export default function ListingCard({ listing, highlightFloat = false }: Listing
       <div className="px-4 pb-4">
         <div className="grid grid-cols-2 gap-3 mb-4">
           {/* Float Value */}
-          <div className="glass-dark rounded-lg p-3">
-            <div className="text-xs text-gray-400 mb-1">Float Value</div>
+          <div className="surface-2 rounded-lg p-3">
+            <div className="text-xs text-muted-foreground mb-1">Float Value</div>
             <div className={`font-mono font-semibold ${floatColor}`}>
               {item.float_value?.toFixed(6) || 'N/A'}
             </div>
           </div>
 
           {/* Wear */}
-          <div className="glass-dark rounded-lg p-3">
-            <div className="text-xs text-gray-400 mb-1">Condition</div>
-            <div className={`text-sm font-semibold bg-gradient-to-r ${wearGradient} bg-clip-text text-transparent`}>
+          <div className="surface-2 rounded-lg p-3">
+            <div className="text-xs text-muted-foreground mb-1">Condition</div>
+            <div className="text-sm font-semibold text-foreground">
               {item.wear_name || 'Unknown'}
             </div>
           </div>
 
           {/* Paint Seed */}
-          <div className="glass-dark rounded-lg p-3">
-            <div className="text-xs text-gray-400 mb-1">Paint Seed</div>
-            <div className="font-mono text-sm text-white">
+          <div className="surface-2 rounded-lg p-3">
+            <div className="text-xs text-muted-foreground mb-1">Paint Seed</div>
+            <div className="font-mono text-sm text-foreground">
               {item.paint_seed || 'N/A'}
             </div>
           </div>
 
           {/* Paint Index */}
-          <div className="glass-dark rounded-lg p-3">
-            <div className="text-xs text-gray-400 mb-1">Pattern</div>
-            <div className="font-mono text-sm text-white">
+          <div className="surface-2 rounded-lg p-3">
+            <div className="text-xs text-muted-foreground mb-1">Pattern</div>
+            <div className="font-mono text-sm text-foreground">
               {item.paint_index || 'N/A'}
             </div>
           </div>
@@ -118,9 +118,9 @@ export default function ListingCard({ listing, highlightFloat = false }: Listing
 
         {/* Collection */}
         {item.collection && (
-          <div className="glass-dark rounded-lg p-3 mb-4">
-            <div className="text-xs text-gray-400 mb-1">Collection</div>
-            <div className="text-sm text-primary-300 font-medium">
+          <div className="surface-2 rounded-lg p-3 mb-4">
+            <div className="text-xs text-muted-foreground mb-1">Collection</div>
+            <div className="text-sm text-primary font-medium">
               {item.collection}
             </div>
           </div>
@@ -132,19 +132,16 @@ export default function ListingCard({ listing, highlightFloat = false }: Listing
             href={item.inspect_link}
             target="_blank"
             rel="noreferrer"
-            className="flex-1 btn-primary rounded-lg py-2.5 px-4 text-sm font-semibold flex items-center justify-center gap-2 hover:shadow-glow transition-all duration-300"
+            className="flex-1 btn-primary rounded-lg py-2.5 px-4 text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200"
           >
             <Eye size={16} />
             Inspect
           </a>
-          <button className="btn-secondary rounded-lg p-2.5 hover:bg-glass-medium transition-all duration-300">
+          <button className="btn-secondary rounded-lg p-2.5 transition-all duration-200">
             <Star size={16} />
           </button>
         </div>
       </div>
-
-      {/* Hover Effect Overlay */}
-      <div className="absolute inset-0 bg-gradient-primary opacity-0 group-hover:opacity-5 transition-opacity duration-300 pointer-events-none" />
     </div>
   )
 }

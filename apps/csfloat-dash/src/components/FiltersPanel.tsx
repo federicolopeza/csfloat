@@ -26,16 +26,18 @@ function FilterSection({ title, icon, children, defaultExpanded = true }: Filter
   const [isExpanded, setIsExpanded] = useState(defaultExpanded)
 
   return (
-    <div className="glass-dark rounded-xl overflow-hidden">
+    <div className="surface-1 rounded-xl overflow-hidden">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full p-4 flex items-center justify-between hover:bg-white/5 transition-colors"
+        className="w-full p-4 flex items-center justify-between hover:bg-surface-2 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <div className="text-primary-400">{icon}</div>
-          <span className="font-semibold text-white">{title}</span>
+          <div className="text-primary">{icon}</div>
+          <span className="font-semibold text-foreground">{title}</span>
         </div>
-        {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+        <div className="text-muted-foreground">
+          {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+        </div>
       </button>
       {isExpanded && (
         <div className="p-4 pt-0 animate-slide-up">
@@ -60,8 +62,8 @@ function QuickFilterChip({
       onClick={onClick}
       className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
         active 
-          ? 'bg-gradient-primary text-white shadow-glow' 
-          : 'bg-glass-light hover:bg-glass-medium text-gray-300 hover:text-white'
+          ? 'bg-primary text-primary-foreground' 
+          : 'bg-surface-2 hover:bg-surface-3 text-muted-foreground hover:text-foreground border border-border'
       }`}
     >
       {label}
@@ -153,18 +155,18 @@ export default function FiltersPanel() {
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="p-6 border-b border-white/10">
+      <div className="p-6 border-b border-border">
         <div className="flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center">
-            <Filter className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
+            <Filter className="w-5 h-5 text-primary-foreground" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-white">Filters</h2>
-            <p className="text-sm text-gray-400">Refine your search</p>
+            <h2 className="text-xl font-bold text-foreground">Filters</h2>
+            <p className="text-sm text-muted-foreground">Refine your search</p>
           </div>
         </div>
         {hasActiveFilters && (
-          <div className="flex items-center gap-2 text-xs text-primary-300">
+          <div className="flex items-center gap-2 text-xs text-primary">
             <Zap size={12} />
             <span>Active filters applied</span>
           </div>
@@ -177,15 +179,15 @@ export default function FiltersPanel() {
         <FilterSection title="Search" icon={<Search size={18} />}>
           <div className="space-y-3">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
               <input
                 value={market}
                 onChange={(e) => setMarket(e.target.value)}
                 placeholder="e.g., AK-47 | Redline"
-                className="input-premium w-full pl-10 pr-4 py-3"
+                className="input w-full pl-10 pr-4 py-3"
               />
             </div>
-            <p className="text-xs text-gray-500">Search by exact weapon name</p>
+            <p className="text-xs text-muted-foreground">Search by exact weapon name</p>
           </div>
         </FilterSection>
 
@@ -194,23 +196,23 @@ export default function FiltersPanel() {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-gray-400 mb-2">Min Price (cents)</label>
+                <label className="block text-xs text-muted-foreground mb-2">Min Price (cents)</label>
                 <input
                   inputMode="numeric"
                   pattern="[0-9]*"
                   placeholder="0"
-                  className="input-premium w-full py-2.5"
+                  className="input w-full py-2.5"
                   value={minPrice}
                   onChange={(e) => setMinPrice(e.target.value)}
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-400 mb-2">Max Price (cents)</label>
+                <label className="block text-xs text-muted-foreground mb-2">Max Price (cents)</label>
                 <input
                   inputMode="numeric"
                   pattern="[0-9]*"
                   placeholder="∞"
-                  className="input-premium w-full py-2.5"
+                  className="input w-full py-2.5"
                   value={maxPrice}
                   onChange={(e) => setMaxPrice(e.target.value)}
                 />
@@ -236,34 +238,34 @@ export default function FiltersPanel() {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-gray-400 mb-2">Min Float</label>
+                <label className="block text-xs text-muted-foreground mb-2">Min Float</label>
                 <input
                   type="number"
                   step="0.0001"
                   min={0}
                   max={1}
                   placeholder="0.0000"
-                  className="input-premium w-full py-2.5 font-mono"
+                  className="input w-full py-2.5 font-mono"
                   value={minFloat}
                   onChange={(e) => setMinFloat(e.target.value)}
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-400 mb-2">Max Float</label>
+                <label className="block text-xs text-muted-foreground mb-2">Max Float</label>
                 <input
                   type="number"
                   step="0.0001"
                   min={0}
                   max={1}
                   placeholder="1.0000"
-                  className="input-premium w-full py-2.5 font-mono"
+                  className="input w-full py-2.5 font-mono"
                   value={maxFloat}
                   onChange={(e) => setMaxFloat(e.target.value)}
                 />
               </div>
             </div>
             <div className="space-y-2">
-              <p className="text-xs text-gray-400">Quick wear presets:</p>
+              <p className="text-xs text-muted-foreground">Quick wear presets:</p>
               <div className="grid grid-cols-2 gap-2">
                 {wearOptions.map((wear) => (
                   <button
@@ -272,10 +274,10 @@ export default function FiltersPanel() {
                       setMinFloat(String(wear.min))
                       setMaxFloat(String(wear.max))
                     }}
-                    className="p-2 rounded-lg bg-glass-light hover:bg-glass-medium transition-colors text-left"
+                    className="p-2 rounded-lg bg-surface-2 hover:bg-surface-3 transition-colors text-left border border-border"
                   >
-                    <div className="text-sm font-medium text-white">{wear.key}</div>
-                    <div className="text-xs text-gray-400">{wear.label}</div>
+                    <div className="text-sm font-medium text-foreground">{wear.key}</div>
+                    <div className="text-xs text-muted-foreground">{wear.label}</div>
                   </button>
                 ))}
               </div>
@@ -287,23 +289,23 @@ export default function FiltersPanel() {
         <FilterSection title="Pattern & Seed" icon={<Palette size={18} />}>
           <div className="space-y-4">
             <div>
-              <label className="block text-xs text-gray-400 mb-2">Paint Seed</label>
+              <label className="block text-xs text-muted-foreground mb-2">Paint Seed</label>
               <input
                 inputMode="numeric"
                 pattern="[0-9]*"
                 placeholder="e.g., 420"
-                className="input-premium w-full py-2.5 font-mono"
+                className="input w-full py-2.5 font-mono"
                 value={paintSeed}
                 onChange={(e) => setPaintSeed(e.target.value)}
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-2">Paint Index</label>
+              <label className="block text-xs text-muted-foreground mb-2">Paint Index</label>
               <input
                 inputMode="numeric"
                 pattern="[0-9]*"
                 placeholder="e.g., 179"
-                className="input-premium w-full py-2.5 font-mono"
+                className="input w-full py-2.5 font-mono"
                 value={paintIndex}
                 onChange={(e) => setPaintIndex(e.target.value)}
               />
@@ -318,9 +320,9 @@ export default function FiltersPanel() {
               value={collection}
               onChange={(e) => setCollection(e.target.value)}
               placeholder="e.g., set_bravo_ii"
-              className="input-premium w-full py-2.5"
+              className="input w-full py-2.5"
             />
-            <p className="text-xs text-gray-500">Enter collection ID</p>
+            <p className="text-xs text-muted-foreground">Enter collection ID</p>
           </div>
         </FilterSection>
 
@@ -329,17 +331,17 @@ export default function FiltersPanel() {
           <div className="space-y-3">
             <input
               placeholder="ID|POSITION,ID|POSITION"
-              className="input-premium w-full py-2.5 font-mono"
+              className="input w-full py-2.5 font-mono"
               value={stickers}
               onChange={(e) => setStickers(e.target.value)}
             />
             {f.errors['stickers'] && (
-              <p className="text-xs text-red-400 flex items-center gap-2">
+              <p className="text-xs text-danger flex items-center gap-2">
                 <Target size={12} />
                 {f.errors['stickers']}
               </p>
             )}
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               Format: StickerID|Position (0-3), separate multiple with commas
             </p>
           </div>
@@ -347,22 +349,22 @@ export default function FiltersPanel() {
       </div>
 
       {/* Action Buttons */}
-      <div className="p-6 border-t border-white/10 space-y-3">
+      <div className="p-6 border-t border-border space-y-3">
         <button 
           onClick={handleApply}
-          className="w-full btn-primary rounded-xl py-4 font-semibold text-lg hover:shadow-glow transition-all duration-300"
+          className="w-full btn-primary rounded-xl py-4 font-semibold text-lg transition-all duration-200"
         >
           Apply Filters
         </button>
         <button
           onClick={handleReset}
-          className="w-full btn-secondary rounded-xl py-3 font-medium flex items-center justify-center gap-2"
+          className="w-full btn-subtle rounded-xl py-3 font-medium flex items-center justify-center gap-2"
         >
           <RotateCcw size={16} />
           Reset All
         </button>
         {hasActiveFilters && (
-          <p className="text-center text-xs text-gray-500">
+          <p className="text-center text-xs text-muted-foreground">
             {Object.keys(f.errors).length > 0 ? 'Fix errors above to apply' : 'Filters ready to apply'}
           </p>
         )}

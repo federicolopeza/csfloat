@@ -15,23 +15,23 @@ function LoadingSkeleton() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
       {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="card-premium p-4 animate-pulse">
+        <div key={i} className="card p-4 shimmer">
           <div className="flex justify-between items-start mb-4">
             <div className="flex-1">
-              <div className="h-4 bg-gray-700 rounded mb-2 w-3/4"></div>
-              <div className="h-3 bg-gray-800 rounded w-1/2"></div>
+              <div className="h-4 bg-surface-2 rounded mb-2 w-3/4"></div>
+              <div className="h-3 bg-surface-3 rounded w-1/2"></div>
             </div>
-            <div className="h-6 bg-gray-700 rounded w-16"></div>
+            <div className="h-6 bg-surface-2 rounded w-16"></div>
           </div>
           <div className="grid grid-cols-2 gap-3 mb-4">
             {Array.from({ length: 4 }).map((_, j) => (
-              <div key={j} className="glass-dark rounded-lg p-3">
-                <div className="h-2 bg-gray-800 rounded mb-2 w-1/2"></div>
-                <div className="h-3 bg-gray-700 rounded w-3/4"></div>
+              <div key={j} className="surface-2 rounded-lg p-3">
+                <div className="h-2 bg-surface-3 rounded mb-2 w-1/2"></div>
+                <div className="h-3 bg-surface-2 rounded w-3/4"></div>
               </div>
             ))}
           </div>
-          <div className="h-10 bg-gray-700 rounded"></div>
+          <div className="h-10 bg-surface-2 rounded"></div>
         </div>
       ))}
     </div>
@@ -41,12 +41,12 @@ function LoadingSkeleton() {
 function ErrorState({ error, onRetry }: { error: Error; onRetry?: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-6">
-      <div className="card-premium p-8 text-center max-w-md">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/10 flex items-center justify-center">
-          <AlertTriangle className="w-8 h-8 text-red-400" />
+      <div className="card p-8 text-center max-w-md">
+        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-danger/10 flex items-center justify-center">
+          <AlertTriangle className="w-8 h-8 text-danger" />
         </div>
-        <h3 className="text-xl font-semibold text-white mb-2">Something went wrong</h3>
-        <p className="text-gray-400 mb-6">{error.message}</p>
+        <h3 className="text-xl font-semibold text-foreground mb-2">Something went wrong</h3>
+        <p className="text-muted-foreground mb-6">{error.message}</p>
         {onRetry && (
           <button
             onClick={onRetry}
@@ -64,18 +64,18 @@ function ErrorState({ error, onRetry }: { error: Error; onRetry?: () => void }) 
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-20 px-6">
-      <div className="card-premium p-12 text-center max-w-lg">
-        <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-primary/10 flex items-center justify-center animate-float">
-          <Sparkles className="w-10 h-10 text-primary-400" />
+      <div className="card p-12 text-center max-w-lg">
+        <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center">
+          <Sparkles className="w-10 h-10 text-primary" />
         </div>
-        <h3 className="text-2xl font-bold text-white mb-3">No skins found</h3>
-        <p className="text-gray-400 mb-6 leading-relaxed">
+        <h3 className="text-2xl font-bold text-foreground mb-3">No skins found</h3>
+        <p className="text-muted-foreground mb-6 leading-relaxed">
           We couldn't find any skins matching your current filters. Try adjusting your search criteria or removing some filters to see more results.
         </p>
         <div className="flex flex-wrap gap-2 justify-center text-sm">
-          <span className="px-3 py-1 bg-glass-light rounded-full text-gray-300">Try different float range</span>
-          <span className="px-3 py-1 bg-glass-light rounded-full text-gray-300">Adjust price limits</span>
-          <span className="px-3 py-1 bg-glass-light rounded-full text-gray-300">Change weapon type</span>
+          <span className="badge badge-subtle">Try different float range</span>
+          <span className="badge badge-subtle">Adjust price limits</span>
+          <span className="badge badge-subtle">Change weapon type</span>
         </div>
       </div>
     </div>
@@ -86,12 +86,12 @@ function ResultsHeader({ count }: { count: number }) {
   return (
     <div className="flex items-center justify-between mb-6">
       <div className="flex items-center gap-3">
-        <h2 className="text-xl font-bold text-white">Search Results</h2>
-        <span className="px-3 py-1 bg-gradient-primary/20 text-primary-300 rounded-full text-sm font-medium">
+        <h2 className="text-xl font-bold text-foreground">Search Results</h2>
+        <span className="badge badge-primary">
           {count.toLocaleString()} items
         </span>
       </div>
-      <div className="flex items-center gap-2 text-sm text-gray-400">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <TrendingUp size={16} />
         <span>Live market data</span>
       </div>
@@ -138,8 +138,8 @@ export default function ListingsGrid(props: Props) {
       {/* Load More Section */}
       <div className="flex flex-col items-center gap-4">
         {isLoading && listings.length > 0 && (
-          <div className="flex items-center gap-3 text-gray-400">
-            <div className="w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+          <div className="flex items-center gap-3 text-muted-foreground">
+            <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
             <span className="font-medium">Loading more results...</span>
           </div>
         )}
@@ -147,20 +147,20 @@ export default function ListingsGrid(props: Props) {
         {!isLoading && hasNextPage && (
           <button
             onClick={onLoadMore}
-            className="group btn-primary rounded-xl py-4 px-8 font-semibold text-lg flex items-center gap-3 hover:shadow-glow-lg transition-all duration-300"
+            className="group btn-primary rounded-xl py-4 px-8 font-semibold text-lg flex items-center gap-3 transition-all duration-200"
           >
             <span>Load More Skins</span>
-            <ChevronDown className="w-5 h-5 group-hover:translate-y-1 transition-transform duration-300" />
+            <ChevronDown className="w-5 h-5 group-hover:translate-y-1 transition-transform duration-200" />
           </button>
         )}
         
         {!isLoading && !hasNextPage && listings.length > 0 && (
-          <div className="card-premium p-6 text-center">
-            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gradient-accent/10 flex items-center justify-center">
-              <Sparkles className="w-6 h-6 text-accent-400" />
+          <div className="card p-6 text-center">
+            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-accent/10 flex items-center justify-center">
+              <Sparkles className="w-6 h-6 text-accent" />
             </div>
-            <p className="text-gray-400 font-medium">You've reached the end of the results</p>
-            <p className="text-sm text-gray-500 mt-1">Try adjusting your filters to find more skins</p>
+            <p className="text-muted-foreground font-medium">You've reached the end of the results</p>
+            <p className="text-sm text-muted-foreground mt-1">Try adjusting your filters to find more skins</p>
           </div>
         )}
       </div>
