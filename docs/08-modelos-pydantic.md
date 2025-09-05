@@ -1,5 +1,28 @@
 # Modelos Pydantic y Validación de Datos
 
+## 🔄 Integración con TypeScript
+
+### Flujo de Datos API → Python → TypeScript
+Los modelos Pydantic definidos en este documento tienen sus equivalentes TypeScript en el dashboard web (`apps/csfloat-dash/src/lib/models/types.ts`). El flujo de datos sigue este patrón:
+
+```
+CSFloat API → Pydantic Models (Python) → JSON → TypeScript Types (Web Dashboard)
+```
+
+### Correspondencia de Modelos
+| Modelo Python | Tipo TypeScript | Propósito |
+|---------------|-----------------|-----------|
+| `Listing` | `Listing` | Estructura principal de listings |
+| `Item` | `Item` | Información detallada del ítem |
+| `Seller` | `Seller` | Datos del vendedor |
+| `SellerStats` | `SellerStatistics` | Estadísticas del vendedor |
+| `Sticker` | `Sticker` | Stickers aplicados al ítem |
+| `ListingsPage` | `ListingsResponse` | Respuesta paginada de listings |
+
+### Validación Dual
+- **Python (Backend)**: Pydantic valida respuestas de la API CSFloat
+- **TypeScript (Frontend)**: Tipos TypeScript validan datos recibidos del proxy server
+
 ## 🏗️ Arquitectura de Modelos
 
 ### Configuración Base para Todos los Modelos
@@ -284,6 +307,49 @@ def post_listing(asset_id: str, **kwargs) -> Listing:
     return Listing.model_validate(response.response.json())
 ```
 
+## 🔗 Sincronización Python ↔ TypeScript
+
+### Campos Críticos Compartidos
+Los siguientes campos son esenciales tanto en Python como en TypeScript:
+
+```python
+# Python (Pydantic)
+class Item(BaseModel):
+    float_value: Optional[float] = None    # → TypeScript: float_value: number
+    paint_seed: Optional[int] = None       # → TypeScript: paint_seed: number
+    paint_index: Optional[int] = None      # → TypeScript: paint_index: number
+    market_hash_name: Optional[str] = None # → TypeScript: market_hash_name: string
+    inspect_link: Optional[str] = None     # → TypeScript: inspect_link: string
+```
+
+```typescript
+// TypeScript (Web Dashboard)
+interface Item {
+  float_value: number        // Requerido en frontend
+  paint_seed: number         // Requerido en frontend
+  paint_index: number        // Requerido en frontend
+  market_hash_name: string   // Requerido en frontend
+  inspect_link: string       // Requerido en frontend
+}
+```
+
+### Diferencias de Tipado
+- **Python**: Campos opcionales con `Optional[T]` para compatibilidad con API
+- **TypeScript**: Campos requeridos para garantizar datos completos en UI
+- **Proxy Server**: Filtra y valida que los campos requeridos estén presentes
+
+### Validación en el Dashboard Web
+```typescript
+// El proxy server valida que los datos cumplan con los tipos TypeScript
+export async function getListings(params: ListingsParams): Promise<ListingsResponse> {
+  const response = await fetchJSON<ListingsResponse>(url)
+  
+  // TypeScript garantiza que response.data sea Listing[]
+  // Cada Listing tiene Item con campos requeridos
+  return response
+}
+```
+
 ## ⚠️ Consideraciones Especiales
 
 ### Manejo de Campos Faltantes
@@ -300,6 +366,127 @@ if listing.item.float_value is None:
 # Fallbacks para campos opcionales
 display_name = listing.item.market_hash_name or listing.item.item_name or "Unknown Item"
 ```
+
+## 🛡️ Seguridad de Tipos Cross-Language
+
+### Estrategia de Validación Dual
+El sistema implementa validación en dos capas para garantizar integridad de datos:
+
+#### 1. Validación Python (Servidor Proxy)
+```python
+# El servidor proxy Hono valida con Pydantic antes de enviar al frontend
+from pydantic import ValidationError
+
+try:
+    listing = Listing.model_validate(api_response)
+    # Solo se envía al frontend si la validación es exitosa
+    return listing.model_dump()
+except ValidationError as e:
+    # Se registra el error y se devuelve error 500
+    logger.error(f"Invalid API response: {e}")
+    raise HTTPException(status_code=500, detail="Invalid data from API")
+```
+
+#### 2. Validación TypeScript (Frontend)
+```typescript
+// El frontend valida tipos en tiempo de compilación y runtime
+interface Item {
+  float_value: number    // TypeScript garantiza que existe
+  paint_seed: number     // No puede ser undefined
+  inspect_link: string   // Siempre presente
+}
+
+// Runtime validation en el dashboard
+function validateListing(data: unknown): Listing {
+  // TypeScript + runtime checks aseguran estructura correcta
+  if (!isValidListing(data)) {
+    throw new Error('Invalid listing data received')
+  }
+  return data as Listing
+}
+```
+
+### Manejo de Inconsistencias de Datos
+
+#### Campos Opcionales vs Requeridos
+```python
+# Python: Flexible para compatibilidad con API
+class Item(BaseModel):
+    float_value: Optional[float] = None  # Puede ser None
+    
+# Proxy server: Filtra datos incompletos
+def filter_complete_listings(listings: List[Listing]) -> List[Listing]:
+    return [
+        listing for listing in listings 
+        if listing.item.float_value is not None 
+        and listing.item.paint_seed is not None
+        and listing.item.inspect_link is not None
+    ]
+```
+
+```typescript
+// TypeScript: Estricto para garantizar UI funcional
+interface Item {
+  float_value: number  // Siempre presente en frontend
+  paint_seed: number   // Garantizado por filtrado del proxy
+  inspect_link: string // Requerido para funcionalidad
+}
+```
+
+### Ejemplos de Validación en el Dashboard Web
+
+#### Validación de Respuestas API
+```typescript
+// apps/csfloat-dash/src/lib/api/csfloat.ts
+export async function getListings(params: ListingsParams): Promise<ListingsResponse> {
+  try {
+    const response = await fetchJSON<ListingsResponse>(url)
+    
+    // TypeScript valida estructura en compile-time
+    // Runtime validation adicional si es necesario
+    if (!response.data || !Array.isArray(response.data)) {
+      throw new Error('Invalid response format')
+    }
+    
+    // Cada listing ya fue validado por el proxy server
+    return response
+  } catch (error) {
+    console.error('API validation failed:', error)
+    throw error
+  }
+}
+```
+
+#### Validación de Campos Críticos
+```typescript
+// Validación específica para campos críticos en componentes
+function ListingCard({ listing }: { listing: Listing }) {
+  // TypeScript garantiza que estos campos existen
+  const floatValue = listing.item.float_value  // number (no undefined)
+  const paintSeed = listing.item.paint_seed    // number (no undefined)
+  
+  // Validación adicional para casos edge
+  if (floatValue < 0 || floatValue > 1) {
+    console.warn(`Invalid float value: ${floatValue}`)
+    return <ErrorCard message="Invalid item data" />
+  }
+  
+  return (
+    <div>
+      <span>Float: {floatValue.toFixed(6)}</span>
+      <span>Seed: {paintSeed}</span>
+    </div>
+  )
+}
+```
+
+### Beneficios de la Validación Dual
+
+1. **Robustez**: Errores capturados en múltiples capas
+2. **Performance**: Frontend recibe solo datos válidos
+3. **Debugging**: Errores localizados en la capa apropiada
+4. **Mantenibilidad**: Cambios de API detectados automáticamente
+5. **UX**: UI nunca renderiza datos incompletos o inválidos
 
 ### Performance en Parsing
 - **Validación lazy**: Pydantic v2 es más eficiente

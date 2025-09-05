@@ -1,5 +1,7 @@
 # Comandos CLI y Especificaciones
 
+> **💡 Alternativa Web**: Muchas de estas funciones también están disponibles en el [Dashboard Web](../README.md#web-dashboard-features) con una interfaz visual interactiva. Ver [comparación CLI vs Web](#cli-vs-web-dashboard) al final de este documento.
+
 ## 🖥️ CLI Framework y Configuración
 
 ### Framework Base
@@ -20,6 +22,8 @@ csf = "csfloat_client.cli:main"
 
 #### Descripción
 Busca listados con filtros avanzados y muestra resultados en tabla formateada.
+
+> **🌐 Equivalente Web**: El dashboard web ofrece la misma funcionalidad con filtros interactivos, vista de tarjetas visuales y paginación automática. Ideal para exploración visual de ítems.
 
 #### Sintaxis Completa
 ```bash
@@ -85,6 +89,8 @@ csf listings:find --category 2 --max-price 10000 --sort-by lowest_price
 #### Descripción
 Obtiene y muestra el detalle completo de un listing específico.
 
+> **🌐 Equivalente Web**: En el dashboard web, haz clic en cualquier ítem para ver sus detalles completos con imágenes, historial de precios y enlaces de inspección.
+
 #### Sintaxis
 ```bash
 csf listing:get --id <LISTING_ID>
@@ -119,6 +125,8 @@ csf listing:get --id 324288155723370196
 
 #### Descripción
 Publica un nuevo ítem en el marketplace. **Requiere CSFLOAT_API_KEY configurada**.
+
+> **🌐 Equivalente Web**: Actualmente solo disponible via CLI. El dashboard web se enfoca en búsqueda y exploración de ítems existentes.
 
 #### Sintaxis
 ```bash
@@ -155,6 +163,8 @@ Publicado listing id=<ID> tipo=<TYPE> price=<PRICE>
 
 #### Descripción
 Exporta resultados de búsqueda a archivo CSV, con soporte para paginación automática.
+
+> **🌐 Equivalente Web**: El dashboard web permite copiar datos de ítems individuales. Para exportación masiva, usa este comando CLI.
 
 #### Sintaxis
 ```bash
@@ -221,3 +231,45 @@ app = typer.Typer(
     help="CLI para CSFloat Market API"
 )
 ```
+
+## 🔄 CLI vs Web Dashboard
+
+### Comparación de Funcionalidades
+
+| Funcionalidad | CLI | Web Dashboard | Recomendación |
+|---------------|-----|---------------|---------------|
+| **Búsqueda de ítems** | ✅ `csf listings:find` | ✅ Filtros interactivos | Web para exploración visual, CLI para automatización |
+| **Detalle de ítem** | ✅ `csf listing:get` | ✅ Vista de tarjeta expandida | Web para inspección visual, CLI para datos estructurados |
+| **Publicar ítem** | ✅ `csf listing:list` | ❌ No disponible | Solo CLI |
+| **Exportar datos** | ✅ `csf listings:export` | ⚠️ Copia individual | CLI para exportación masiva |
+| **Filtros avanzados** | ✅ Todos los parámetros | ✅ Interfaz visual | Web más intuitivo, CLI más preciso |
+| **Paginación** | ✅ Manual con `--cursor` | ✅ Automática | Web más fluido |
+| **Visualización** | 📊 Tabla en terminal | 🎨 Tarjetas con imágenes | Web superior para UX |
+| **Automatización** | ✅ Scripts y pipelines | ❌ No scripteable | CLI único para automatización |
+| **Velocidad** | ⚡ Muy rápido | 🌐 Depende de conexión | CLI más rápido para consultas simples |
+
+### Cuándo Usar Cada Interfaz
+
+#### Usa CLI cuando:
+- **Automatización**: Scripts, cron jobs, pipelines de datos
+- **Exportación masiva**: Grandes volúmenes de datos a CSV
+- **Publicación de ítems**: Única interfaz disponible
+- **Integración**: Con otras herramientas de línea de comandos
+- **Velocidad**: Consultas rápidas sin overhead visual
+- **Precisión**: Filtros exactos con parámetros específicos
+
+#### Usa Web Dashboard cuando:
+- **Exploración visual**: Browsing casual de ítems
+- **Comparación de ítems**: Vista lado a lado de múltiples ítems
+- **Experiencia de usuario**: Interfaz más amigable e intuitiva
+- **Filtros interactivos**: Ajuste dinámico de criterios de búsqueda
+- **Inspección detallada**: Imágenes, enlaces, datos visuales
+- **Demostración**: Mostrar funcionalidad a otros usuarios
+
+### Configuración Compartida
+
+Ambas interfaces comparten:
+- **API Key**: Misma `CSFLOAT_API_KEY` en archivo `.env`
+- **Endpoints**: Mismos endpoints de CSFloat Market API
+- **Modelos de datos**: Estructuras Pydantic compartidas
+- **Manejo de errores**: Lógica de reintentos y rate limiting

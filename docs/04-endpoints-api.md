@@ -8,6 +8,14 @@
 - **Autenticación**: API key en header `Authorization: <API-KEY>`
 - **Generación de API Key**: Perfil CSFloat → pestaña "developer"
 
+### Consumo desde Web Dashboard
+El web dashboard consume los mismos endpoints que el CLI a través de un servidor proxy Hono que:
+- **Proxy URL**: `http://localhost:8787/proxy/*` (desarrollo)
+- **Inyección de Auth**: El proxy server inyecta automáticamente la API key desde variables de entorno
+- **Manejo de CORS**: Elimina restricciones de CORS para el frontend React
+- **Rate Limiting**: Implementa rate limiting por IP (60 req/min por defecto)
+- **Retry Logic**: Manejo automático de reintentos con backoff exponencial
+
 ## 📋 Endpoints Soportados
 
 ### 1. `GET /api/v1/listings` - Listados Activos
@@ -52,13 +60,30 @@ Obtiene listados activos con filtros y ordenamiento. Soporta cursor-based pagina
 | `type` | string | Tipo de listing | `buy_now` o `auction` |
 | `stickers` | string | Formato: ID\|POSITION?[,ID\|POSITION?...] | `"1,2\|0,3\|1"` |
 
-#### Ejemplo de Wrapper
+#### Ejemplo de Wrapper CLI
 ```python
 def get_listings(**filters) -> list[Listing]:
     """
     Construir query de forma determinística (orden alfabético) 
     para reproducibilidad en tests.
     """
+```
+
+#### Consumo desde Web Dashboard
+```typescript
+// Frontend React consume el mismo endpoint via proxy
+import { getListings } from '@/lib/api/csfloat'
+
+const response = await getListings({
+  sort_by: 'lowest_price',
+  min_float: 0.00,
+  max_float: 0.07,
+  limit: 50
+})
+// Proxy server maneja automáticamente:
+// - Inyección de Authorization header
+// - Rate limiting y retry logic
+// - Transformación de respuesta JSON
 ```
 
 ### 2. `GET /api/v1/listings/{id}` - Detalle de Listing
@@ -71,12 +96,22 @@ Obtiene el detalle completo de un listing específico. Devuelve el objeto comple
 |-----------|------|-----------|-------------|
 | `id` | string | ✅ | ID único del listing |
 
-#### Ejemplo de Wrapper
+#### Ejemplo de Wrapper CLI
 ```python
 def get_listing(listing_id: str) -> Listing:
     """
     Debe obtener el objeto completo incluso si state ≠ listed.
     """
+```
+
+#### Consumo desde Web Dashboard
+```typescript
+// Frontend consume el mismo endpoint para detalles
+import { getListingById } from '@/lib/api/csfloat'
+
+const listing = await getListingById('listing-id-123')
+// Proxy server maneja la autenticación y retry logic
+// Respuesta idéntica a la del CLI Python
 ```
 
 ### 3. `POST /api/v1/listings` - Publicar Ítem
@@ -96,7 +131,7 @@ Publica un nuevo ítem en el marketplace. **Requiere Authorization header**.
 | `description` | string | - | Descripción (máximo 180 caracteres) | - |
 | `private` | bool | - | Listing privado | `true`/`false` |
 
-#### Ejemplo de Wrapper
+#### Ejemplo de Wrapper CLI
 ```python
 def post_listing(
     asset_id: str, 
@@ -110,9 +145,14 @@ def post_listing(
     """
 ```
 
+#### Nota sobre Web Dashboard
+El endpoint `POST /listings` actualmente **no está implementado** en el web dashboard, ya que se enfoca en exploración y visualización de listings existentes. El proxy server solo maneja endpoints de lectura (`GET`).
+
 ## 🔍 Estructura de Respuesta
 
 ### Modelo Listing Completo
+
+#### Python (Pydantic)
 ```python
 class Listing(BaseModel):
     # Campos principales
@@ -134,7 +174,25 @@ class Listing(BaseModel):
     is_seller: Optional[bool]
 ```
 
+#### TypeScript (Web Dashboard)
+```typescript
+interface Listing {
+  id: string
+  price: number
+  state: string
+  type: 'buy_now' | 'auction'
+  created_at: string           // ISO string en lugar de datetime
+  seller: Seller
+  item: Item
+  watchers: number
+  min_offer_price?: number
+  max_offer_discount?: number
+}
+```
+
 ### Campos Críticos del Item
+
+#### Python (Pydantic)
 ```python
 class Item(BaseModel):
     # Identificadores
@@ -156,6 +214,97 @@ class Item(BaseModel):
     scm: Optional[SCM]
 ```
 
+#### TypeScript (Web Dashboard)
+```typescript
+interface Item {
+  float_value: number
+  paint_seed: number
+  paint_index: number
+  def_index: number
+  market_hash_name: string
+  wear_name: string
+  collection?: string
+  inspect_link: string
+  stickers?: Sticker[]
+}
+```
+
+### Validación Cross-Language
+
+#### Flujo de Datos
+```
+CSFloat API → Python Pydantic → JSON → TypeScript Types → React Components
+```
+
+#### Diferencias Clave
+| Aspecto | Python | TypeScript |
+|---------|--------|------------|
+| **Fechas** | `datetime` objects | ISO strings |
+| **Opcionales** | `Optional[T]` | `T \| undefined` |
+| **Listas** | `List[T]` | `T[]` |
+| **Validación** | Runtime (Pydantic) | Compile-time + Runtime |
+| **Naming** | `snake_case` | `snake_case` (mantenido) |
+
+#### Validación en Web Dashboard
+- **Compile-time**: TypeScript verifica tipos en desarrollo
+- **Runtime**: Validación implícita via JSON parsing
+- **Error Handling**: Proxy server maneja errores de API y los reenvía al frontend
+
+## 🔄 Proxy Server (Web Dashboard)
+
+### Arquitectura del Proxy
+El web dashboard utiliza un servidor proxy Hono (`apps/csfloat-dash/server/index.ts`) que actúa como intermediario entre el frontend React y la API de CSFloat:
+
+```
+Frontend React → Proxy Hono (localhost:8787) → CSFloat API (csfloat.com)
+```
+
+### Endpoints del Proxy
+| Endpoint Proxy | Endpoint CSFloat | Descripción |
+|----------------|------------------|-------------|
+| `GET /proxy/listings` | `GET /api/v1/listings` | Listados con filtros |
+| `GET /proxy/listings/:id` | `GET /api/v1/listings/:id` | Detalle de listing |
+
+### Procesamiento de Requests/Responses
+
+#### Inyección de Autenticación
+```typescript
+// El proxy inyecta automáticamente la API key
+const headers: Record<string, string> = {
+  accept: 'application/json',
+}
+if (API_KEY) headers['authorization'] = API_KEY
+```
+
+#### Rate Limiting por IP
+- **Límite**: 60 requests por minuto por IP (configurable)
+- **Ventana**: 60 segundos (configurable)
+- **Respuesta**: HTTP 429 con header `retry-after`
+
+#### Retry Logic con Backoff Exponencial
+```typescript
+// Delays: [500ms, 1000ms, 2000ms, 4000ms]
+// Reintentos automáticos para:
+// - HTTP 429 (rate limit)
+// - HTTP 5xx (errores de servidor)
+// - Respeta header 'retry-after' de CSFloat
+```
+
+#### Manejo de Errores
+- **Transparencia**: Reenvía status codes y headers originales
+- **Logging**: Registra método, path, status y tiempo de respuesta
+- **Headers preservados**: `content-type`, `retry-after`
+
+### Variables de Entorno
+```bash
+# Configuración del proxy server
+PORT=8787                    # Puerto del proxy
+CSFLOAT_BASE=https://csfloat.com  # Base URL de CSFloat
+CSFLOAT_API_KEY=your-api-key      # API key (inyectada automáticamente)
+RATE_LIMIT=60                     # Requests por ventana
+RATE_WINDOW_MS=60000             # Ventana en milisegundos
+```
+
 ## ⚠️ Notas Importantes
 
 ### Precios en Centavos
@@ -169,3 +318,4 @@ class Item(BaseModel):
 ### Autenticación Requerida
 - `POST /listings` **siempre requiere** header `Authorization`
 - `GET` endpoints pueden funcionar sin auth, pero algunos pueden requerir auth para datos completos
+- **Web Dashboard**: La autenticación se maneja automáticamente en el proxy server
