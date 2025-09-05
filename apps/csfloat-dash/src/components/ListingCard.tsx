@@ -1,6 +1,7 @@
 import React from 'react'
-import { Eye, Star, TrendingUp, Clock, Users } from 'lucide-react'
+import { Eye, ExternalLink, Star, TrendingUp, Clock, Users } from 'lucide-react'
 import type { Listing } from '../lib/models/types'
+import { getCsfloatPublicUrl } from '../lib/utils/url'
 
 function centsToUSD(cents?: number | null) {
   if (typeof cents !== 'number') return '-'
@@ -38,6 +39,7 @@ export default function ListingCard({ listing, highlightFloat = false }: Listing
   const isSouvenir = item.market_hash_name?.includes('Souvenir')
   const floatColor = getFloatColor(item.float_value)
   const wearGradient = getWearGradient(item.wear_name)
+  const csfloatUrl = getCsfloatPublicUrl(listing)
   
   return (
     <div className="group card p-0 overflow-hidden transition-all duration-200">
@@ -68,7 +70,7 @@ export default function ListingCard({ listing, highlightFloat = false }: Listing
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold text-primary">
-              ${centsToUSD(listing.price)}
+              {centsToUSD(listing.price)}
             </div>
             {listing.watchers && listing.watchers > 0 && (
               <div className="flex items-center justify-end gap-1 text-xs text-muted-foreground mt-1">
@@ -137,9 +139,27 @@ export default function ListingCard({ listing, highlightFloat = false }: Listing
             <Eye size={16} />
             Inspect
           </a>
-          <button className="btn-secondary rounded-lg p-2.5 transition-all duration-200">
-            <Star size={16} />
-          </button>
+          {csfloatUrl ? (
+            <a
+              href={csfloatUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 btn-secondary rounded-lg py-2.5 px-4 text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200"
+            >
+              <ExternalLink size={16} />
+              View on CSFloat
+            </a>
+          ) : (
+            <button
+              className="flex-1 btn-secondary rounded-lg py-2.5 px-4 text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200 opacity-60 cursor-not-allowed"
+              disabled
+              aria-disabled="true"
+              title="URL no disponible para este ítem"
+            >
+              <ExternalLink size={16} />
+              View on CSFloat
+            </button>
+          )}
         </div>
       </div>
     </div>
