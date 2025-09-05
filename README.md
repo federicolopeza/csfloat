@@ -1,101 +1,233 @@
 # CSFloat Market API — Test Harness (Python 3.11+)
 
-Harness "listo para correr" que prueba y expone vía CLI los endpoints públicos de CSFloat Market para: listar publicaciones, obtener detalle por ID y publicar un ítem.
+Test harness **"listo para correr"** que prueba exhaustivamente la CSFloat Market API pública. Construido como Senior Backend + QA Automation con cliente Python tipado, CLI completa y suite de tests robusta.
 
-- Base URL: `https://csfloat.com`
-- Doc oficial: https://docs.csfloat.com/#introduction
-- Autenticación: API key en header `Authorization: <API-KEY>` (desde tu perfil, pestaña "developer").
+## 🎯 Características Principales
 
-## Requisitos
-- Python 3.11+
-- Windows PowerShell (los ejemplos usan `pwsh`)
+- **Cliente HTTP robusto** con reintentos automáticos, backoff exponencial y logging detallado
+- **CLI completa** con 4 comandos principales y formateo Rich
+- **Modelos Pydantic tipados** con validación completa de datos
+- **Suite de tests** con cobertura ≥70% y mocking HTTP
+- **Documentación técnica** completa en [`/docs`](docs/)
 
-## Instalación
-1) Crear y activar un entorno virtual
+### Endpoints Soportados
+- **`GET /api/v1/listings`** - Listados activos con filtros avanzados y paginación
+- **`GET /api/v1/listings/{id}`** - Detalle completo de un listing específico
+- **`POST /api/v1/listings`** - Publicar ítem en el marketplace (requiere auth)
 
+## 🚀 Instalación Rápida
+
+### Requisitos
+- **Python 3.11+** (requerimiento estricto)
+- **Windows PowerShell** (para los ejemplos)
+
+### Setup
 ```powershell
+# 1. Crear y activar entorno virtual
 python -m venv .venv
 . .venv/Scripts/Activate.ps1
-```
 
-2) Instalar dependencias
-
-```powershell
+# 2. Instalar en modo desarrollo
 pip install -e .
+
+# 3. Instalar con dependencias de testing
+pip install -e ".[test]"
+
+# 4. Configurar variables de entorno
+copy .env.example .env
+# Editar .env con tu CSFLOAT_API_KEY
 ```
 
-3) Configurar variables de entorno
-
-- Copiá `.env.example` a `.env` y completá tu `CSFLOAT_API_KEY` si vas a usar `POST /listings`.
-- `CSFLOAT_BASE` permite sobreescribir la base (por defecto `https://csfloat.com`).
-
+### Variables de Entorno
 ```ini
+# Obligatorio para POST /listings
 CSFLOAT_API_KEY=xxxxxxxxxxxxxxxx
+
+# Opcional - Base URL (default: https://csfloat.com)
 CSFLOAT_BASE=https://csfloat.com
+
+# Opcional - Proxies (respetados por httpx)
+HTTP_PROXY=http://proxy:8080
+HTTPS_PROXY=https://proxy:8080
 ```
 
-> Proxies opcionales (respetados por httpx a través del entorno): `HTTP_PROXY`, `HTTPS_PROXY`.
+> **API Key**: Obtené tu clave desde tu perfil CSFloat → pestaña "developer"
 
-## Uso de la CLI
-La herramienta instala el comando `csf`.
+## 🖥️ Uso de la CLI
 
-Ejemplos:
+La instalación registra el comando global `csf` con 4 comandos principales:
 
+### 1. Búsqueda de Listados (`listings:find`)
 ```powershell
-# Buscar por float y precio
+# Buscar AK-47 Redline con float bajo y precio mínimo
 csf listings:find --limit 20 --sort-by lowest_price --max-float 0.07 --market-hash-name "AK-47 | Redline (Field-Tested)"
 
-# Buscar por seed y colección
+# Buscar por paint seed específico en colección Bravo II
 csf listings:find --paint-seed 555 --collection set_bravo_ii --limit 50
 
-# Detalle por ID
+# Buscar StatTrak con precio máximo
+csf listings:find --category 2 --max-price 10000 --sort-by lowest_price
+```
+
+### 2. Detalle de Listing (`listing:get`)
+```powershell
+# Obtener información completa de un listing específico
 csf listing:get --id 324288155723370196
+```
 
-# Publicar un ítem (requiere API key)
+### 3. Publicar Ítem (`listing:list`)
+```powershell
+# Publicar ítem (requiere CSFLOAT_API_KEY configurada)
 csf listing:list --asset-id 21078095468 --type buy_now --price 8900 --private false --desc "Just for show"
+```
 
-# Exportar CSV
+### 4. Exportar a CSV (`listings:export`)
+```powershell
+# Exportar resultados de búsqueda con paginación automática
 csf listings:export --title "AK-47 | Redline" --min-float 0.00 --max-float 0.07 --out redline_fn.csv
 ```
 
-## Filtros soportados (`GET /api/v1/listings`)
-- Paginación y orden: `cursor`, `limit (≤50)`, `sort_by` en {`lowest_price`, `highest_price`, `most_recent`, `expires_soon`, `lowest_float`, `highest_float`, `best_deal`, `highest_discount`, `float_rank`, `num_bids`}.
-- Filtros: `category` (0:any | 1:normal | 2:stattrak | 3:souvenir), `def_index` (uno o varios), `min_float`, `max_float`, `rarity`, `paint_seed`, `paint_index`, `user_id`, `collection` (ej. `set_bravo_ii`), `min_price`, `max_price`, `market_hash_name` (exacto), `type` (`buy_now` | `auction`), `stickers` (formato `ID|POSITION?[,ID|POSITION?...]`).
+> **Ayuda**: Usa `csf --help` o `csf <comando> --help` para ver todas las opciones disponibles
 
-La construcción de la query es determinística (orden alfabético de claves) para reproducibilidad en pruebas.
+## 🔍 Capacidades de Filtrado
 
-## Modelos de respuesta
-De acuerdo a la documentación pública, los objetos Listing incluyen (entre otros):
-- `id`, `created_at`, `type`, `price` (centavos), `state`.
-- `seller`: `avatar`, `flags`, `online`, `stall_public`, `statistics`, `steam_id`, `username` (u `obfuscated_id` en algunos casos).
-- `item`: `asset_id`, `def_index`, `paint_index`, `paint_seed`, `float_value`, `rarity`, `quality`, `market_hash_name`, `tradable`, `item_name`, `wear_name`, `collection`, `badges`, `has_screenshot`, `inspect_link`.
-- `item.stickers[]`: `stickerId`, `slot`, `wear?`, `icon_url`, `name`, `scm { price, volume }`.
-- Otros: `min_offer_price`, `max_offer_discount`, `is_watchlisted`, `watchers`, `is_seller`.
+### Paginación y Ordenamiento
+- **`cursor`** - Cursor opaco para página siguiente
+- **`limit`** - Máximo 50 items por página
+- **`sort_by`** - Opciones: `lowest_price`, `highest_price`, `most_recent`, `expires_soon`, `lowest_float`, `highest_float`, `best_deal`, `highest_discount`, `float_rank`, `num_bids`
 
-> Precios en centavos según doc. El endpoint `GET /api/v1/listings/{id}` devuelve el objeto completo incluso si `state ≠ listed`.
+### Filtros por Ítem
+- **`def_index`** - Definition index (puede repetirse)
+- **`min_float` / `max_float`** - Rango de float value
+- **`paint_seed`** - Paint seed exacto
+- **`paint_index`** - Pattern/paint index
+- **`rarity`** - Rareza específica
+- **`market_hash_name`** - Nombre exacto de mercado
+- **`collection`** - ID de colección (ej. `set_bravo_ii`)
 
-## Troubleshooting
-- 401/403 Unauthorized/Forbidden
-  - Verificá que `CSFLOAT_API_KEY` esté presente en `.env` o en tu entorno y que el endpoint lo requiera.
-- 404 Not Found
-  - Revisá el `id` del listing o que la ruta sea correcta.
-- 429 Too Many Requests
-  - El cliente implementa reintentos con backoff exponencial y respeta `Retry-After` cuando está presente.
-- Timeouts / Red
-  - Se aplican timeouts razonables. Podés configurar proxies via `HTTP_PROXY` / `HTTPS_PROXY`.
+### Filtros por Precio y Categoría
+- **`min_price` / `max_price`** - Rango de precio en **centavos**
+- **`category`** - 0:any | 1:normal | 2:stattrak | 3:souvenir
+- **`type`** - `buy_now` | `auction`
+- **`user_id`** - SteamID64 del vendedor
+- **`stickers`** - Formato: `ID|POSITION?[,ID|POSITION?...]`
 
-## Desarrollo y pruebas
-- Ejecutar tests y cobertura:
+> **Nota**: Las queries se construyen de forma determinística (orden alfabético) para reproducibilidad en tests
 
-```powershell
-pytest
+## 📊 Modelos de Datos
+
+### Estructura Principal (`Listing`)
+```python
+class Listing(BaseModel):
+    # Campos principales
+    id: str                      # ID único del listing
+    created_at: datetime         # Timestamp de creación
+    type: str                    # "buy_now" | "auction"
+    price: Optional[int]         # Precio en centavos
+    state: Optional[str]         # "listed" | "sold" | "cancelled"
+    
+    # Relaciones
+    seller: Seller               # Información del vendedor
+    item: Item                   # Información del ítem
+    
+    # Metadatos
+    watchers: Optional[int]      # Número de watchers
+    min_offer_price: Optional[int]
+    max_offer_discount: Optional[int]
+    is_watchlisted: Optional[bool]
+    is_seller: Optional[bool]
 ```
 
-- Cobertura objetivo: ≥80% en `csfloat_client/http.py` y `csfloat_client/endpoints.py`; ≥70% global.
-  - La cobertura excluye `csfloat_client/cli.py` por ser interfaz de línea de comandos.
+### Información del Ítem (`Item`)
+- **Identificadores**: `asset_id`, `def_index`
+- **Características críticas**: `paint_seed`, `float_value`, `inspect_link`
+- **Metadatos**: `market_hash_name`, `collection`, `rarity`, `quality`
+- **Extras**: `stickers[]`, `badges[]`, `scm` (Steam Community Market data)
 
-> Nota: durante las pruebas, el fixture de `tests/conftest.py` establece `CSFLOAT_IGNORE_DOTENV=1` para evitar cargar `.env` y así no inyectar `Authorization` por accidente. Configurá tu `.env` solo para ejecutar ejemplos o la CLI real.
+### Información del Vendedor (`Seller`)
+- **Identificación**: `steam_id`, `username`, `obfuscated_id`
+- **Estado**: `online`, `avatar`, `stall_public`
+- **Estadísticas**: `statistics` (trades, tiempo promedio, etc.)
 
-## Referencias
-- Introducción y autenticación: https://docs.csfloat.com/#introduction
-- Listings: `GET /api/v1/listings`, `GET /api/v1/listings/{id}`, `POST /api/v1/listings`.
+> **Importante**: 
+> - Todos los precios están en **centavos** (ej. $89.00 = 8900 centavos)
+> - `GET /listings/{id}` devuelve el objeto completo incluso si `state ≠ "listed"`
+> - Modelos usan Pydantic v2 con `extra="ignore"` para forward compatibility
+
+## 🔧 Desarrollo y Testing
+
+### Ejecutar Tests
+```powershell
+# Tests completos con cobertura
+pytest
+
+# Tests específicos con verbose
+pytest -v tests/test_listings_filters.py
+
+# Solo un test específico
+pytest tests/test_pagination.py::test_pagination_limit_1_produces_different_cursor
+```
+
+### Objetivos de Cobertura
+- **≥70%** cobertura global
+- **≥80%** en módulos críticos (`http.py`, `endpoints.py`)
+- **Branch coverage** habilitado
+- **CLI excluida** por ser interfaz de usuario
+
+### Stack Técnico
+- **httpx** - Cliente HTTP con async, timeouts y reintentos
+- **Pydantic v2** - Modelos tipados con validación
+- **Typer** - Framework CLI moderno
+- **Rich** - Formateo de consola y tablas
+- **pytest + respx** - Testing con HTTP mocking
+
+## 🚨 Troubleshooting
+
+### Errores de Autenticación
+- **401/403 Unauthorized/Forbidden**
+  - Verificá que `CSFLOAT_API_KEY` esté en `.env`
+  - Confirmá que el endpoint requiere autenticación
+  - Revisá que la API key sea válida en tu perfil CSFloat
+
+### Errores de Datos
+- **404 Not Found**
+  - Revisá el `id` del listing (formato de número largo)
+  - Confirmá que la ruta del endpoint sea correcta
+  - El listing puede haber sido eliminado
+
+### Rate Limiting y Red
+- **429 Too Many Requests**
+  - El cliente implementa **reintentos automáticos** con backoff exponencial
+  - Respeta `Retry-After` header cuando está presente
+  - Si persiste, reducí la frecuencia de requests
+
+- **Timeouts / Errores de Red**
+  - Timeouts configurados: 10s total, 5s connect
+  - Configurá proxies via `HTTP_PROXY` / `HTTPS_PROXY`
+  - Verificá conectividad a internet y DNS
+
+## 📚 Documentación Técnica
+
+La documentación completa del proyecto está disponible en [`/docs`](docs/):
+
+- **[01. Producto y Propósito](docs/01-producto-y-proposito.md)** - Funcionalidades y casos de uso
+- **[02. Stack Tecnológico](docs/02-stack-tecnologico.md)** - Dependencias y configuración
+- **[03. Estructura y Arquitectura](docs/03-estructura-y-arquitectura.md)** - Organización del código
+- **[04. Endpoints API](docs/04-endpoints-api.md)** - Especificaciones detalladas de la API
+- **[05. Comandos CLI](docs/05-comandos-cli.md)** - Sintaxis completa de comandos
+- **[06. Estrategia de Testing](docs/06-estrategia-testing.md)** - Plan de tests y QA
+- **[07. Manejo de Errores](docs/07-manejo-errores.md)** - Logging y troubleshooting
+- **[08. Modelos Pydantic](docs/08-modelos-pydantic.md)** - Validación de datos
+
+## 🔗 Referencias
+
+- **API Oficial**: https://docs.csfloat.com/#introduction
+- **Base URL**: `https://csfloat.com`
+- **Endpoints**: `GET /api/v1/listings`, `GET /api/v1/listings/{id}`, `POST /api/v1/listings`
+
+## ⚠️ Notas Importantes
+
+- **Tests aislados**: Durante las pruebas, `CSFLOAT_IGNORE_DOTENV=1` evita cargar `.env` accidentalmente
+- **Configuración real**: Solo configurá `.env` para ejecutar ejemplos o la CLI en producción
+- **Precios en centavos**: Todos los valores monetarios están expresados en centavos según la documentación oficial
+- **Forward compatibility**: Los modelos Pydantic ignoran campos desconocidos para compatibilidad futura
