@@ -53,6 +53,13 @@ apps/csfloat-dash/
 - La API key nunca llega al cliente; si está definida en `.env`, el proxy agrega `Authorization`.
 - No subir `.env` ni secretos al repo. `.env` ya está git-ignored.
 
+## Enlace "View on CSFloat"
+
+- `ListingCard.tsx` incluye el botón "View on CSFloat" que abre la URL pública en CSFloat.
+- La URL se construye con el helper `getCsfloatPublicUrl(listing)` y devuelve directamente el permalink `https://csfloat.com/item/<listing.id>`.
+- El resolver `resolveCsfloatPublicUrl(listing)` queda como compatibilidad, pero actualmente hace short-circuit y devuelve el permalink sin consultar detalle (ya no se necesita `item.id`).
+- Esto no utiliza endpoints privados ni expone la API key (todo pasa por el proxy `/proxy/*`).
+
 ## 🎨 Premium Design Features
 
 ### Visual Design System

@@ -1,7 +1,7 @@
 import React from 'react'
 import { Eye, ExternalLink, Star, TrendingUp, Clock, Users } from 'lucide-react'
 import type { Listing } from '../lib/models/types'
-import { getCsfloatPublicUrl } from '../lib/utils/url'
+import { getCsfloatPublicUrl, resolveCsfloatPublicUrl } from '../lib/utils/url'
 
 function centsToUSD(cents?: number | null) {
   if (typeof cents !== 'number') return '-'
@@ -40,6 +40,23 @@ export default function ListingCard({ listing, highlightFloat = false }: Listing
   const floatColor = getFloatColor(item.float_value)
   const wearGradient = getWearGradient(item.wear_name)
   const csfloatUrl = getCsfloatPublicUrl(listing)
+  const [resolving, setResolving] = React.useState(false)
+
+  const handleOpenCsfloat = async () => {
+    try {
+      setResolving(true)
+      const url = await resolveCsfloatPublicUrl(listing)
+      if (url) {
+        window.open(url, '_blank', 'noopener')
+        return
+      }
+      // Fallback: si no se pudo resolver, intentar con lo que tengamos
+      const fallback = getCsfloatPublicUrl(listing)
+      if (fallback) window.open(fallback, '_blank', 'noopener')
+    } finally {
+      setResolving(false)
+    }
+  }
   
   return (
     <div className="group card p-0 overflow-hidden transition-all duration-200">
@@ -139,7 +156,8 @@ export default function ListingCard({ listing, highlightFloat = false }: Listing
             <Eye size={16} />
             Inspect
           </a>
-          {csfloatUrl ? (
+          {/* Preferimos el permalink inmediato si ya está disponible */}
+          {csfloatUrl && csfloatUrl.includes('/item/') ? (
             <a
               href={csfloatUrl}
               target="_blank"
@@ -151,13 +169,14 @@ export default function ListingCard({ listing, highlightFloat = false }: Listing
             </a>
           ) : (
             <button
-              className="flex-1 btn-secondary rounded-lg py-2.5 px-4 text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200 opacity-60 cursor-not-allowed"
-              disabled
-              aria-disabled="true"
-              title="URL no disponible para este ítem"
+              onClick={handleOpenCsfloat}
+              className={`flex-1 btn-secondary rounded-lg py-2.5 px-4 text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200 ${resolving ? 'opacity-60 cursor-wait' : ''}`}
+              disabled={resolving}
+              aria-busy={resolving}
+              title={resolving ? 'Resolviendo enlace…' : 'Abrir en CSFloat'}
             >
               <ExternalLink size={16} />
-              View on CSFloat
+              {resolving ? 'Resolviendo…' : 'View on CSFloat'}
             </button>
           )}
         </div>
