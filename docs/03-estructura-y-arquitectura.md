@@ -72,6 +72,9 @@ apps/csfloat-dash/
     └── lib/
         ├── api/                   # Clientes API y utilidades
         ├── models/                # Tipos TypeScript (mirrors Pydantic)
+        ├── utils/                 # Utilidades de frontend
+        │   ├── images.ts          # buildSteamEconomyImageUrl, getItemImageUrl
+        │   └── url.ts             # getCsfloatPublicUrl, resolveCsfloatPublicUrl(With)
         └── demo-data.ts           # Datos de demostración
 ```
 
@@ -89,6 +92,7 @@ apps/csfloat-dash/
 - **Proxy Server**: Hono ejecutándose en puerto 8787
 - **Estado**: Zustand para manejo de estado global
 - **Queries**: TanStack Query para cache y sincronización de datos
+ - **Fuentes**: Inter cargada con `<link>` en `index.html` (sin `@import` en CSS) para evitar errores PostCSS y mejorar performance
 
 ### 3. Endpoints Layer (`endpoints.py`)
 - **Wrappers tipados** para cada endpoint de la API
@@ -120,7 +124,7 @@ Frontend React (Puerto 5173) → Proxy Hono (Puerto 8787) → CSFloat API
 ```
 
 #### Flujo de Comunicación
-1. **Frontend Request**: React envía peticiones a `http://localhost:8787/api/*`
+1. **Frontend Request**: React envía peticiones a `http://localhost:8787/proxy/*`
 2. **Proxy Processing**: Hono intercepta, añade headers de autenticación y reenvía a CSFloat API
 3. **API Response**: CSFloat API responde al proxy con datos JSON
 4. **Frontend Response**: Proxy reenvía la respuesta al frontend con headers CORS apropiados
@@ -134,8 +138,8 @@ Frontend React (Puerto 5173) → Proxy Hono (Puerto 8787) → CSFloat API
 
 #### Configuración del Proxy
 - **Puerto**: 8787 (configurable via `PORT` env var)
-- **Rutas**: Mapeo directo de `/api/*` a endpoints de CSFloat
-- **Headers**: Inyección automática de `Authorization: Bearer {API_KEY}`
+- **Rutas**: Endpoints `/proxy/*` que forwardean hacia `https://csfloat.com/api/v1/*`
+- **Headers**: Inyección automática de `Authorization: <API_KEY>`
 - **Environment**: Variables cargadas desde `.env` file
 
 ## ⚛️ Arquitectura de Componentes React
@@ -184,6 +188,7 @@ App.tsx (Raíz)
 - **Props**: Recibe objeto `Listing` tipado
 - **UI**: Imagen, precio, float, detalles del item
 - **Interacciones**: Click para detalles, hover effects
+ - **Permalink**: Botón "View on CSFloat" que usa `getCsfloatPublicUrl(listing)` y `resolveCsfloatPublicUrl` con fallback a `https://csfloat.com/checker?inspect=...`
 
 ### Manejo de Estado
 
@@ -201,7 +206,7 @@ App.tsx (Raíz)
 1. **User Input**: Usuario modifica filtros en `FiltersPanel`
 2. **State Update**: Filtros se actualizan en `useFilters` store
 3. **Query Trigger**: TanStack Query detecta cambio y ejecuta nueva query
-4. **API Call**: Query llama al proxy server con nuevos filtros
+4. **API Call**: Query llama al proxy server en `/proxy/*` con nuevos filtros
 5. **UI Update**: `ListingsGrid` se re-renderiza con nuevos datos
 
 ## 🔧 Workflow de Desarrollo y Build
@@ -258,7 +263,7 @@ npm run preview
 # .env file
 CSFLOAT_API_KEY=your_api_key_here
 PORT=8787
-VITE_API_BASE_URL=http://localhost:8787
+# Nota: el frontend usa rutas relativas (`/proxy/*`) y no requiere `VITE_API_BASE_URL`
 ```
 
 #### Archivos de Configuración

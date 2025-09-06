@@ -84,6 +84,12 @@ csf listings:find --category 2 --max-price 10000 --sort-by lowest_price
 | `name` | Market hash name | - |
 | `watchers` | Número de watchers | - |
 
+Adicionalmente, si el servidor retorna un cursor de paginación, el comando imprime:
+
+```
+next_cursor: <CURSOR>
+```
+
 ### 2. `csf listing:get` - Detalle de Listing
 
 #### Descripción
@@ -195,6 +201,8 @@ csf listings:export --title "AK-47 | Redline" --min-float 0.00 --max-float 0.07 
 Exportadas <N> filas a <archivo>
 Título: <título>
 ```
+
+Nota: `listings:export` usa internamente `paginate_listings()` para recorrer múltiples páginas hasta completar el número solicitado (`--pages`) o agotarse los resultados.
 
 ## 🔧 Implementación Técnica
 

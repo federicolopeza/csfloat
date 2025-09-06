@@ -372,19 +372,19 @@ display_name = listing.item.market_hash_name or listing.item.item_name or "Unkno
 ### Estrategia de Validación Dual
 El sistema implementa validación en dos capas para garantizar integridad de datos:
 
-#### 1. Validación Python (Servidor Proxy)
+#### 1. Validación Python (CLI)
 ```python
-# El servidor proxy Hono valida con Pydantic antes de enviar al frontend
+# El cliente CLI valida con Pydantic las respuestas de la API
 from pydantic import ValidationError
 
 try:
     listing = Listing.model_validate(api_response)
-    # Solo se envía al frontend si la validación es exitosa
-    return listing.model_dump()
+    # La CLI sólo continúa si la validación es exitosa
+    print(listing.model_dump())
 except ValidationError as e:
-    # Se registra el error y se devuelve error 500
+    # Registrar error de validación y abortar la operación
     logger.error(f"Invalid API response: {e}")
-    raise HTTPException(status_code=500, detail="Invalid data from API")
+    raise
 ```
 
 #### 2. Validación TypeScript (Frontend)

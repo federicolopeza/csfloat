@@ -86,6 +86,8 @@ const response = await getListings({
 // - Transformación de respuesta JSON
 ```
 
+Nota sobre formato: el proxy normaliza la respuesta a la forma `{ data: Listing[], cursor?: string }` y reexpone el cursor en el header `x-next-cursor`. El cliente web (`getListings`) también intenta leer `cursor` del cuerpo normalizado si el header no está presente.
+
 ### 2. `GET /api/v1/listings/{id}` - Detalle de Listing
 
 #### Descripción
@@ -122,9 +124,9 @@ Publica un nuevo ítem en el marketplace. **Requiere Authorization header**.
 #### Parámetros del Body (JSON)
 | Parámetro | Tipo | Requerido | Descripción | Valores |
 |-----------|------|-----------|-------------|---------|
-| `asset_id` | string | ✅ | ID del asset de Steam | - |
-| `type` | string | ✅ | Tipo de listing | `buy_now` o `auction` |
-| `price` | int | ⚠️ | Precio en centavos (requerido si buy_now) | - |
+| `asset_id` | string | | ID del asset de Steam | - |
+| `type` | string | | Tipo de listing | `buy_now` o `auction` |
+| `price` | int | | Precio en centavos (requerido si buy_now) | - |
 | `max_offer_discount` | int | - | Descuento máximo en ofertas | - |
 | `reserve_price` | int | - | Precio de reserva para subastas | - |
 | `duration_days` | int | - | Duración en días | `1`, `3`, `5`, `7`, `14` |
@@ -201,12 +203,12 @@ class Item(BaseModel):
     
     # Características del skin
     paint_index: Optional[int]
-    paint_seed: Optional[int]     # ⚠️ Crítico para tests
-    float_value: Optional[float]  # ⚠️ Crítico para tests
+    paint_seed: Optional[int]     # Crítico para tests
+    float_value: Optional[float]  # Crítico para tests
     
     # Metadatos
     market_hash_name: Optional[str]
-    inspect_link: Optional[str]   # ⚠️ Crítico para tests
+    inspect_link: Optional[str]   # Crítico para tests
     collection: Optional[str]
     
     # Stickers y extras
@@ -217,6 +219,7 @@ class Item(BaseModel):
 #### TypeScript (Web Dashboard)
 ```typescript
 interface Item {
+  id?: string
   float_value: number
   paint_seed: number
   paint_index: number
@@ -225,9 +228,16 @@ interface Item {
   wear_name: string
   collection?: string
   inspect_link: string
+  serialized_inspect?: string
+  icon_url?: string
+  has_screenshot?: boolean
   stickers?: Sticker[]
 }
 ```
+
+Notas:
+- `icon_url` y `has_screenshot` se utilizan para renderizar la imagen del ítem en el dashboard.
+- La URL final de imagen se construye con `getItemImageUrl` en `apps/csfloat-dash/src/lib/utils/images.ts`.
 
 ### Validación Cross-Language
 
@@ -264,6 +274,7 @@ Frontend React → Proxy Hono (localhost:8787) → CSFloat API (csfloat.com)
 |----------------|------------------|-------------|
 | `GET /proxy/listings` | `GET /api/v1/listings` | Listados con filtros |
 | `GET /proxy/listings/:id` | `GET /api/v1/listings/:id` | Detalle de listing |
+| `GET /proxy/meta/collections` | `GET /api/v1/listings` (muestreo) | Catálogo agregado de colecciones (cacheado) |
 
 ### Procesamiento de Requests/Responses
 
@@ -290,6 +301,11 @@ if (API_KEY) headers['authorization'] = API_KEY
 // - Respeta header 'retry-after' de CSFloat
 ```
 
+#### Normalización de Parámetros (collection)
+- Si el parámetro `collection` llega como nombre "amigable" (por ejemplo, `The Gamma Collection` o `the_gamma_collection`), el proxy lo reescribe a la forma de ID esperada por la API (`set_gamma`).
+- La reescritura usa primero un índice estático (catálogo) y, si no hay match, aplica heurísticas: normaliza, elimina artículos/sufijos y convierte a snake case.
+- Esta lógica mejora la DX del frontend sin cambiar la especificación de la API de CSFloat.
+
 #### Manejo de Errores
 - **Transparencia**: Reenvía status codes y headers originales
 - **Logging**: Registra método, path, status y tiempo de respuesta
@@ -304,6 +320,19 @@ CSFLOAT_API_KEY=your-api-key      # API key (inyectada automáticamente)
 RATE_LIMIT=60                     # Requests por ventana
 RATE_WINDOW_MS=60000             # Ventana en milisegundos
 ```
+
+## 🔗 Permalinks y Enlaces Públicos (Web)
+
+El dashboard ofrece un botón "View on CSFloat" que apunta al permalink público del ítem:
+
+- Preferencia: `https://csfloat.com/item/<ID>`
+  - `getCsfloatPublicUrl(listing)` genera el permalink directo (usa el ID del listing).
+  - `resolveCsfloatPublicUrlWith(listing, getListingById)` intenta obtener `item.id` desde el detalle y usarlo si está disponible.
+- Fallback: `https://csfloat.com/checker?inspect=<inspect_link>`
+  - Si no hay `item.id`, se usa el `inspect_link` (o `serialized_inspect`) disponible.
+  - Prioridad de fuentes cuando no hay `item.id` en el detalle: primero el `inspect` del listing original y luego el del detalle.
+
+Ubicación del helper en frontend: `apps/csfloat-dash/src/lib/utils/url.ts`.
 
 ## ⚠️ Notas Importantes
 

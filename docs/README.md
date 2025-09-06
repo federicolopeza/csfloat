@@ -15,12 +15,14 @@ Esta carpeta contiene la documentación técnica completa del proyecto CSFloat M
 - Endpoints soportados según documentación oficial
 - Casos de uso específicos para traders (CLI y web)
 - Criterios de aceptación para ambos componentes
+- Novedades: imágenes de skins en tarjetas (Steam economy) y botón de permalink público a CSFloat con fallback al checker
 
 ### 02. [Stack Tecnológico](02-stack-tecnologico.md)
 - Requerimientos de Python 3.11+ y Node.js 18+ con dependencias
 - Configuración de variables de entorno para CLI y web
 - Comandos de desarrollo y testing para ambos componentes
 - Configuración HTTP con timeouts y reintentos
+- Frontend: fuente Inter cargada vía `<link>` en `index.html`; el frontend consume rutas relativas `"/proxy/*"` (no requiere `VITE_API_BASE_URL`)
 
 ### 03. [Estructura y Arquitectura](03-estructura-y-arquitectura.md)
 - Estructura completa de directorios (CLI y dashboard web)
@@ -28,12 +30,15 @@ Esta carpeta contiene la documentación técnica completa del proyecto CSFloat M
 - Convenciones de código y patrones para Python y TypeScript
 - Objetivos de cobertura de tests para ambos componentes
 - 🔗 *Ver también*: [Comandos CLI](05-comandos-cli.md) y [Endpoints API](04-endpoints-api.md)
+- Web Dashboard: utilidades `utils/images.ts` (resolución de imágenes de Steam) y `utils/url.ts` (permalinks/checker)
 
 ### 04. [Endpoints API](04-endpoints-api.md)
 - Especificaciones detalladas de los 3 endpoints soportados
 - Parámetros, filtros y opciones de ordenamiento
 - Estructura de respuesta con campos críticos
 - Ejemplos de uso en CLI y consumo desde dashboard web
+- Proxy Web: endpoints `GET /proxy/listings`, `GET /proxy/listings/:id`, `GET /proxy/meta/collections`
+- Normalización de respuesta del proxy a `{ data: Listing[], cursor?: string }` y cursor por header `x-next-cursor`
 
 ### 05. [Comandos CLI](05-comandos-cli.md)
 - Sintaxis completa de los 4 comandos CLI principales
@@ -41,6 +46,7 @@ Esta carpeta contiene la documentación técnica completa del proyecto CSFloat M
 - Formato de salida con Rich tables
 - Cross-referencias con funcionalidad equivalente en dashboard web
 - 🔗 *Ver también*: [Arquitectura Web](03-estructura-y-arquitectura.md) para UI equivalente
+- Nota: impresión de `next_cursor` cuando esté disponible; `listings:export` recorre páginas automáticamente
 
 ### 06. [Estrategia de Testing](06-estrategia-testing.md)
 - Framework pytest para CLI y testing de componentes React

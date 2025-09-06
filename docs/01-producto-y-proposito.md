@@ -44,6 +44,8 @@ csf listings:export --title "AK-47 | Redline" --min-float 0.00 --max-float 0.07 
 - **Exploración de Colecciones**: Navegar visualmente por colecciones completas con previsualizaciones de skins
 - **Análisis de Tendencias**: Visualizar distribución de precios y floats con gráficos interactivos
 - **Comparación de Ítems**: Ver múltiples listings lado a lado con detalles completos de stickers y wear
+- **Imágenes de Skins**: Renderizado de imágenes mediante `icon_url` (Steam economy) con `getItemImageUrl` y fallback, carga diferida (lazy-load)
+- **Enlaces a CSFloat**: Botón "Ver en CSFloat" que enlaza al permalink público `https://csfloat.com/item/<ID>`; si no hay `item.id`, cae al checker `https://csfloat.com/checker?inspect=...` (ver `apps/csfloat-dash/src/lib/utils/url.ts`)
 
 ### Flujos de Trabajo para Traders (Dashboard Web)
 - **Monitoreo de Mercado**: Dashboard en tiempo real para seguir listings de interés con actualizaciones automáticas

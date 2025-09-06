@@ -30,6 +30,11 @@
 - **Tailwind CSS**: `3.4+` - Framework CSS utility-first
 - **PostCSS**: `8.4+` - Procesamiento CSS y autoprefixer
 
+#### Fuentes (UI)
+- **Inter** cargada desde `index.html` mediante `<link>` a Google Fonts.
+- Se eliminó `@import` en `src/index.css` para evitar errores de PostCSS y mejorar performance.
+- Recomendación: considerar autoalojar la fuente por privacidad si el despliegue lo requiere.
+
 ### Stack Backend (Proxy Server)
 - **Hono**: `4.6+` - Framework web ligero para proxy API
 - **@hono/node-server**: `1.11+` - Adaptador Node.js para Hono
@@ -48,7 +53,7 @@
 - **concurrently**: `9.0+` - Ejecución paralela de scripts
 - **dotenv**: `16.4+` - Gestión de variables de entorno
 
-## ⚙️ Configuración de Entorno
+## Configuración de Entorno
 
 ### Variables de Entorno - CLI Python
 ```bash
@@ -77,7 +82,11 @@ RATE_WINDOW_MS=60000              # Ventana de rate limiting en ms
 - **Uso**: Requerido para `POST /api/v1/listings`
 - **Opcional**: Para endpoints `GET` (algunos pueden requerir auth)
 
-## 🔧 Comandos de Desarrollo
+### Rutas del Frontend hacia el Proxy
+- El frontend consume rutas relativas en `"/proxy/*"` (por ejemplo, `"/proxy/listings"`).
+- No se requiere configurar `VITE_API_BASE_URL` para el desarrollo local.
+
+## Comandos de Desarrollo
 
 ### Setup Inicial CLI Python (PowerShell)
 ```powershell

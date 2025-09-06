@@ -342,20 +342,20 @@ vi.mock('../config/env', () => ({
 
 ### Comandos de Testing Web
 ```bash
-# Ejecutar tests con cobertura
+# Ejecutar tests (Vitest)
 pnpm test
 
-# Tests en modo watch para desarrollo
-pnpm test:watch
+# Ejecutar con cobertura
+pnpm test -- --coverage
 
-# Solo reporte de cobertura
-pnpm test:coverage
+# Modo watch para desarrollo
+pnpm test -- --watch
 
-# Tests específicos
-pnpm test FiltersPanel
+# Ejecutar tests específicos por patrón
+pnpm test -- FiltersPanel
 
-# Tests con UI de Vitest
-pnpm test:ui
+# UI de Vitest (si está disponible)
+pnpm test -- --ui
 ```
 
 ## 📋 Plan de Tests Específicos - Web Dashboard
@@ -725,18 +725,18 @@ mockCSFloatClient.getListings
 
 ### Ejecución de Tests Proxy
 ```bash
-# Tests del proxy server
+# Tests del proxy server (comparten suite Vitest con el frontend)
 cd apps/csfloat-dash
-pnpm test:proxy
+pnpm test
 
-# Tests con cobertura
-pnpm test:proxy --coverage
+# Con cobertura
+pnpm test -- --coverage
 
-# Tests específicos
-pnpm test:proxy listings.test.ts
+# Tests específicos (por patrón)
+pnpm test -- listings.test.ts
 
-# Tests en modo watch
-pnpm test:proxy --watch
+# Modo watch
+pnpm test -- --watch
 ```
 
 ## 🎭 Framework de Testing E2E (Futuro)
@@ -796,7 +796,7 @@ export default defineConfig({
 })
 ```
 
-## 📋 Plan de Tests E2E Planificados
+## 📋 Plan de Tests Específicos - Web Dashboard
 
 ### 1. User Journeys Críticos (`e2e/journeys/`)
 
@@ -971,14 +971,12 @@ pnpm test:e2e:ci
 
 ### Reporting Consolidado
 ```bash
-# Reporte de cobertura completo (todos los componentes)
-pnpm test:coverage:all
+# CLI Python: cobertura
+pytest --cov=csfloat_client --cov-report=term-missing
 
-# Dashboard de métricas de testing
-pnpm test:dashboard
-
-# Reporte para CI/CD
-pnpm test:ci:report
+# Web/Proxy (Vitest): cobertura + reporte HTML
+cd apps/csfloat-dash
+pnpm test -- --coverage --reporter=html
 ```
 
 ### Integration con CI/CD
@@ -1004,7 +1002,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '18'
-      - run: pnpm test:coverage
+      - run: pnpm install
+      - run: pnpm test -- --coverage
       
   test-e2e:
     runs-on: ubuntu-latest

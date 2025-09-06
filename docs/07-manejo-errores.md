@@ -215,9 +215,16 @@ pnpm install
 lsof -i :8787  # macOS/Linux
 netstat -ano | findstr :8787  # Windows
 
-# Terminar proceso o cambiar puerto
-# En package.json, modificar script dev:proxy:
-"dev:proxy": "wrangler dev --port 8788"
+# Terminar proceso o cambiar puerto del proxy
+# Opción recomendada: cambiar PORT por entorno y relanzar el proxy
+# macOS/Linux (temporal para la sesión):
+PORT=8788 pnpm dev:proxy
+
+# Windows PowerShell (temporal para la sesión):
+$env:PORT=8788; pnpm dev:proxy
+
+# Para persistir en Windows (nueva sesión):
+setx PORT 8788
 ```
 
 **Error: "Proxy server not responding"**
@@ -226,13 +233,14 @@ netstat -ano | findstr :8787  # Windows
 pnpm dev:proxy
 
 # 2. Verificar logs del proxy
-# Buscar errores en la consola del proxy
+# El proxy imprime logs JSON en consola (método, path, status, ms)
+# Revisar salida para códigos 4xx/5xx o timeouts
 
 # 3. Verificar configuración de API key
 echo $CSFLOAT_API_KEY  # Debe estar definida
 
-# 4. Reiniciar proxy con logs detallados
-PROXY_LOG_LEVEL=debug pnpm dev:proxy
+# 4. Reiniciar proxy y observar nuevamente la salida
+pnpm dev:proxy
 ```
 
 **Error: "API requests returning 401 in web dashboard"**
@@ -291,13 +299,12 @@ pnpm build:css
 
 #### Logs y Debugging
 
-**Habilitar logs detallados del proxy:**
+**Habilitar logs del proxy:**
 ```bash
-# Desarrollo con logs completos
-PROXY_LOG_LEVEL=debug pnpm dev:proxy
-
-# Ver requests/responses completas
-PROXY_VERBOSE=true pnpm dev:proxy
+# El proxy ya imprime logs JSON por cada request (method, path, status, ms)
+# No existen flags PROXY_LOG_LEVEL / PROXY_VERBOSE en esta implementación.
+# Para depurar más, podés agregar logs temporales en `apps/csfloat-dash/server/index.ts`.
+pnpm dev:proxy
 ```
 
 **Debugging del frontend:**
