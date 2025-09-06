@@ -1,8 +1,9 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useInfiniteQuery, type InfiniteData } from '@tanstack/react-query'
 import { useFilters } from './useFilters'
 import { getListings } from '../lib/api/csfloat'
 import type { Listing, ListingsResponse } from '../lib/models/types'
+import { matchesTokens, parseSmartSearch } from '../lib/search/smartSearch'
 
 export function useListings() {
   const f = useFilters()
@@ -41,7 +42,29 @@ export function useListings() {
   })
 
   const pages = (query.data as InfiniteData<ListingsResponse> | undefined)?.pages ?? []
-  const listings: Listing[] = pages.flatMap((p: ListingsResponse) => p.data)
+  const listingsRaw: Listing[] = pages.flatMap((p: ListingsResponse) => p.data ?? [])
+
+  // Client-side relaxed search: if q present, filter by tokens over market_hash_name
+  const tokens = useMemo(() => {
+    const term = f.q ?? ''
+    if (!term) return [] as string[]
+    const parsed = parseSmartSearch(term)
+    return parsed.tokens
+  }, [f.q])
+
+  const listings: Listing[] = useMemo(() => {
+    if (!tokens.length) return listingsRaw
+    return listingsRaw.filter((l) => matchesTokens(l.item.market_hash_name, tokens))
+  }, [listingsRaw, tokens])
+
+  // Auto-fetch more pages to satisfy relaxed search when results are few
+  useEffect(() => {
+    const MIN_MATCHES = 40
+    if (tokens.length && listings.length < MIN_MATCHES && query.hasNextPage && !query.isFetchingNextPage) {
+      // keep fetching until we either reach threshold or run out of pages
+      query.fetchNextPage()
+    }
+  }, [tokens.length, listings.length, query.hasNextPage, query.isFetchingNextPage])
 
   return {
     listings,

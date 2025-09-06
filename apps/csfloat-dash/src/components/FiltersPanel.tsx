@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { 
   Search, 
   DollarSign, 
@@ -60,6 +60,7 @@ function QuickFilterChip({
   return (
     <button
       onClick={onClick}
+      aria-pressed={active}
       className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
         active 
           ? 'bg-primary text-primary-foreground' 
@@ -74,8 +75,13 @@ function QuickFilterChip({
 export default function FiltersPanel() {
   const f = useFilters()
   const [market, setMarket] = useState(f.market_hash_name ?? '')
-  const [minPrice, setMinPrice] = useState<string>(f.min_price?.toString() ?? '')
-  const [maxPrice, setMaxPrice] = useState<string>(f.max_price?.toString() ?? '')
+  // Show prices in USD (decimals) in the UI; store converts to cents when applying
+  const [minPrice, setMinPrice] = useState<string>(
+    f.min_price !== undefined ? (f.min_price / 100).toString() : ''
+  )
+  const [maxPrice, setMaxPrice] = useState<string>(
+    f.max_price !== undefined ? (f.max_price / 100).toString() : ''
+  )
   const [minFloat, setMinFloat] = useState<string>(
     f.min_float !== undefined ? String(f.min_float) : ''
   )
@@ -91,6 +97,19 @@ export default function FiltersPanel() {
   const [collection, setCollection] = useState<string>(f.collection ?? '')
   const [stickers, setStickers] = useState<string>(f.stickers ?? '')
 
+  // Keep local market input in sync with global store when it changes from Toolbar
+  useEffect(() => {
+    setMarket(f.market_hash_name ?? '')
+  }, [f.market_hash_name])
+
+  // Keep local USD price inputs in sync with store cents values
+  useEffect(() => {
+    setMinPrice(f.min_price !== undefined ? (f.min_price / 100).toString() : '')
+  }, [f.min_price])
+  useEffect(() => {
+    setMaxPrice(f.max_price !== undefined ? (f.max_price / 100).toString() : '')
+  }, [f.max_price])
+
   const wearOptions = useMemo(
     () => [
       { key: 'FN', label: 'Factory New', min: 0.0, max: 0.07, color: 'emerald' },
@@ -102,22 +121,58 @@ export default function FiltersPanel() {
     []
   )
 
-  const priceRanges = [
-    { label: '< $10', min: 0, max: 1000 },
-    { label: '$10 - $50', min: 1000, max: 5000 },
-    { label: '$50 - $250', min: 5000, max: 25000 },
-    { label: '$250 - $1000', min: 25000, max: 100000 },
-    { label: '> $1000', min: 100000, max: 999999999 },
+  const isWearActive = (wear: { min: number; max: number }) =>
+    (minFloat?.trim() || '') === String(wear.min) && (maxFloat?.trim() || '') === String(wear.max)
+
+  // Presets expressed in USD
+  const priceRangesUsd = [
+    { label: '< $10', min: 0, max: 10 },
+    { label: '$10 - $50', min: 10, max: 50 },
+    { label: '$50 - $250', min: 50, max: 250 },
+    { label: '$250 - $1000', min: 250, max: 1000 },
+    { label: '> $1000', min: 1000, max: 9999999 },
   ]
 
+  const usdToCents = (usd: number) => Math.max(0, Math.round(usd * 100))
+
+  const isPriceRangeActive = (range: { min: number; max: number }) => {
+    const toCents = (s: string) => {
+      const t = (s ?? '').trim()
+      if (t === '') return undefined
+      const n = Number(t)
+      return Number.isFinite(n) ? usdToCents(n) : undefined
+    }
+    const minC = toCents(minPrice)
+    const maxC = toCents(maxPrice)
+    return (
+      minC !== undefined && maxC !== undefined &&
+      minC === usdToCents(range.min) && maxC === usdToCents(range.max)
+    )
+  }
+
+  const parseUsdToCentsOpt = (v: string) => {
+    const s = (v ?? '').trim()
+    if (s === '') return undefined
+    // Normalize comma decimal and strip $
+    const normalized = s.replace(/\$/g, '').replace(',', '.')
+    const n = Number(normalized)
+    if (!Number.isFinite(n)) return undefined
+    return Math.max(0, Math.round(n * 100))
+  }
+
+  // Integer parser for paint_seed and paint_index
   const parseIntOpt = (v: string) => {
-    const n = Number(v)
+    const s = (v ?? '').trim()
+    if (s === '') return undefined
+    const n = Number(s)
     if (!Number.isFinite(n)) return undefined
     return Math.max(0, Math.floor(n))
   }
 
   const parseFloat01 = (v: string) => {
-    const n = Number(v)
+    const s = (v ?? '').trim()
+    if (s === '') return undefined
+    const n = Number(s)
     if (!Number.isFinite(n)) return undefined
     return Math.min(1, Math.max(0, n))
   }
@@ -125,8 +180,8 @@ export default function FiltersPanel() {
   const handleApply = () => {
     f.patch({
       market_hash_name: market || undefined,
-      min_price: parseIntOpt(minPrice),
-      max_price: parseIntOpt(maxPrice),
+      min_price: parseUsdToCentsOpt(minPrice),
+      max_price: parseUsdToCentsOpt(maxPrice),
       min_float: parseFloat01(minFloat),
       max_float: parseFloat01(maxFloat),
       paint_seed: parseIntOpt(paintSeed),
@@ -196,21 +251,23 @@ export default function FiltersPanel() {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-muted-foreground mb-2">Min Price (cents)</label>
+                <label className="block text-xs text-muted-foreground mb-2">Min Price (USD)</label>
                 <input
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  placeholder="0"
+                  type="number"
+                  inputMode="decimal"
+                  step="0.01"
+                  placeholder="0.00"
                   className="input w-full py-2.5"
                   value={minPrice}
                   onChange={(e) => setMinPrice(e.target.value)}
                 />
               </div>
               <div>
-                <label className="block text-xs text-muted-foreground mb-2">Max Price (cents)</label>
+                <label className="block text-xs text-muted-foreground mb-2">Max Price (USD)</label>
                 <input
-                  inputMode="numeric"
-                  pattern="[0-9]*"
+                  type="number"
+                  inputMode="decimal"
+                  step="0.01"
                   placeholder="∞"
                   className="input w-full py-2.5"
                   value={maxPrice}
@@ -219,16 +276,29 @@ export default function FiltersPanel() {
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              {priceRanges.map((range) => (
-                <QuickFilterChip
-                  key={range.label}
-                  label={range.label}
-                  onClick={() => {
-                    setMinPrice(String(range.min))
-                    setMaxPrice(String(range.max))
-                  }}
-                />
-              ))}
+              {priceRangesUsd.map((range) => {
+                const active = isPriceRangeActive(range)
+                return (
+                  <QuickFilterChip
+                    key={range.label}
+                    label={range.label}
+                    active={active}
+                    onClick={() => {
+                      if (active) {
+                        setMinPrice('')
+                        setMaxPrice('')
+                        f.patch({ min_price: undefined, max_price: undefined })
+                        f.apply()
+                      } else {
+                        setMinPrice(String(range.min))
+                        setMaxPrice(String(range.max))
+                        f.patch({ min_price: usdToCents(range.min), max_price: usdToCents(range.max) })
+                        f.apply()
+                      }
+                    }}
+                  />
+                )
+              })}
             </div>
           </div>
         </FilterSection>
@@ -267,19 +337,35 @@ export default function FiltersPanel() {
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground">Quick wear presets:</p>
               <div className="grid grid-cols-2 gap-2">
-                {wearOptions.map((wear) => (
-                  <button
-                    key={wear.key}
-                    onClick={() => {
-                      setMinFloat(String(wear.min))
-                      setMaxFloat(String(wear.max))
-                    }}
-                    className="p-2 rounded-lg bg-surface-2 hover:bg-surface-3 transition-colors text-left border border-border"
-                  >
-                    <div className="text-sm font-medium text-foreground">{wear.key}</div>
-                    <div className="text-xs text-muted-foreground">{wear.label}</div>
-                  </button>
-                ))}
+                {wearOptions.map((wear) => {
+                  const active = isWearActive(wear)
+                  return (
+                    <button
+                      key={wear.key}
+                      onClick={() => {
+                        if (active) {
+                          setMinFloat('')
+                          setMaxFloat('')
+                          f.patch({ min_float: undefined, max_float: undefined })
+                          f.apply()
+                        } else {
+                          setMinFloat(String(wear.min))
+                          setMaxFloat(String(wear.max))
+                          f.patch({ min_float: wear.min, max_float: wear.max })
+                          f.apply()
+                        }
+                      }}
+                      className={`p-2 rounded-lg transition-colors text-left border ${
+                        active
+                          ? 'bg-primary text-primary-foreground border-transparent'
+                          : 'bg-surface-2 hover:bg-surface-3 text-foreground border-border'
+                      }`}
+                    >
+                      <div className="text-sm font-medium">{wear.key}</div>
+                      <div className="text-xs text-muted-foreground">{wear.label}</div>
+                    </button>
+                  )
+                })}
               </div>
             </div>
           </div>

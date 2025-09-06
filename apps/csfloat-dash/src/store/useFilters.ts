@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { z } from 'zod'
 import type { ListingsParams, SortOption } from '../lib/models/types'
+import { parseSmartSearch } from '../lib/search/smartSearch'
 
 const stickersRegex = /^\s*\d+\|\d+(\s*,\s*\d+\|\d+)*\s*$/
 
@@ -24,6 +25,7 @@ const schema = z.object({
     .string()
     .regex(stickersRegex, { message: 'Formato inválido. Use ID|POS[,ID|POS]' })
     .optional(),
+  q: z.string().optional(),
 })
 
 type FiltersState = ListingsParams & {
@@ -50,7 +52,23 @@ const initialData: FiltersData = {
 export const useFilters = create<FiltersState>((set, get) => ({
   ...initialData,
   setSortBy: (s) => set({ sort_by: s }),
-  setMarketHashName: (v) => set({ market_hash_name: v }),
+  setMarketHashName: (v) => {
+    const term = (v ?? '').trim()
+    const parsed = parseSmartSearch(term)
+    const patch: Partial<FiltersState> = {}
+    if (parsed.exactName) {
+      patch.market_hash_name = term || undefined
+      patch.q = undefined
+    } else {
+      patch.market_hash_name = undefined
+      patch.q = parsed.q || undefined
+    }
+    // Apply derived numeric/category filters from smart search if present
+    if (parsed.derived.min_float !== undefined) patch.min_float = parsed.derived.min_float
+    if (parsed.derived.max_float !== undefined) patch.max_float = parsed.derived.max_float
+    if (parsed.derived.category !== undefined) patch.category = parsed.derived.category
+    set(patch as Partial<FiltersState>)
+  },
   setLimit: (n) => set({ limit: Math.min(50, Math.max(1, Math.floor(n))) }),
   patch: (p) => set(p as Partial<FiltersState>),
   reset: () => set((state) => ({ ...state, ...initialData, appliedAt: Date.now() })),
@@ -88,6 +106,7 @@ export const useFilters = create<FiltersState>((set, get) => ({
       market_hash_name,
       type,
       stickers,
+      q,
     } = s
     return {
       cursor,
@@ -107,6 +126,7 @@ export const useFilters = create<FiltersState>((set, get) => ({
       market_hash_name,
       type,
       stickers,
+      q,
     }
   },
 }))

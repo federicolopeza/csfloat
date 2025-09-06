@@ -2,6 +2,7 @@ import React from 'react'
 import { Eye, ExternalLink, Star, TrendingUp, Clock, Users } from 'lucide-react'
 import type { Listing } from '../lib/models/types'
 import { getCsfloatPublicUrl, resolveCsfloatPublicUrl } from '../lib/utils/url'
+import { getItemImageUrl } from '../lib/utils/images'
 
 function centsToUSD(cents?: number | null) {
   if (typeof cents !== 'number') return '-'
@@ -41,6 +42,9 @@ export default function ListingCard({ listing, highlightFloat = false }: Listing
   const wearGradient = getWearGradient(item.wear_name)
   const csfloatUrl = getCsfloatPublicUrl(listing)
   const [resolving, setResolving] = React.useState(false)
+  const [imgError, setImgError] = React.useState(false)
+  const [imgLoaded, setImgLoaded] = React.useState(false)
+  const imgUrl = getItemImageUrl(item)
 
   const handleOpenCsfloat = async () => {
     try {
@@ -60,6 +64,25 @@ export default function ListingCard({ listing, highlightFloat = false }: Listing
   
   return (
     <div className="group card p-0 overflow-hidden transition-all duration-200">
+      {/* Image */}
+      <div className="relative bg-background/40 border-b border-border">
+        <div className="w-full h-40 overflow-hidden flex items-center justify-center">
+          {imgUrl && !imgError ? (
+            <img
+              src={imgUrl}
+              alt={item.market_hash_name}
+              className={`max-h-full w-auto object-contain transition-opacity duration-300 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
+              loading="lazy"
+              onLoad={() => setImgLoaded(true)}
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
+              No image
+            </div>
+          )}
+        </div>
+      </div>
       {/* Header with price and badges */}
       <div className="relative p-4 pb-3">
         <div className="flex items-start justify-between mb-3">
