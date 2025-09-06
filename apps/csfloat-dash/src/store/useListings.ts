@@ -29,6 +29,7 @@ export function useListings() {
     f.market_hash_name,
     f.type,
     f.stickers,
+    f.has_image_only,
   ])
 
   const query = useInfiniteQuery<ListingsResponse, Error, ListingsResponse, readonly [string, typeof baseParams], string | undefined>({
@@ -52,10 +53,19 @@ export function useListings() {
     return parsed.tokens
   }, [f.q])
 
-  const listings: Listing[] = useMemo(() => {
+  const listingsByTokens: Listing[] = useMemo(() => {
     if (!tokens.length) return listingsRaw
     return listingsRaw.filter((l) => matchesTokens(l.item.market_hash_name, tokens))
   }, [listingsRaw, tokens])
+
+  const listings: Listing[] = useMemo(() => {
+    if (!f.has_image_only) return listingsByTokens
+    return listingsByTokens.filter((l) => {
+      const url = (l.item as any)?.icon_url
+      const hasScreenshot = (l.item as any)?.has_screenshot
+      return (typeof url === 'string' && url.trim().length > 0) || !!hasScreenshot
+    })
+  }, [listingsByTokens, f.has_image_only])
 
   // Auto-fetch more pages to satisfy relaxed search when results are few
   useEffect(() => {

@@ -96,6 +96,19 @@ export default function FiltersPanel() {
   )
   const [collection, setCollection] = useState<string>(f.collection ?? '')
   const [stickers, setStickers] = useState<string>(f.stickers ?? '')
+  // New filters
+  const [category, setCategory] = useState<number | undefined>(f.category)
+  const [typeVal, setTypeVal] = useState<"buy_now" | "auction" | ''>(f.type ?? '')
+  const [rarity, setRarity] = useState<string>(f.rarity ?? '')
+  const [defIndexInput, setDefIndexInput] = useState<string>(
+    Array.isArray(f.def_index)
+      ? f.def_index.join(',')
+      : f.def_index !== undefined
+      ? String(f.def_index)
+      : ''
+  )
+  const [userId, setUserId] = useState<string>(f.user_id ?? '')
+  const [imageOnly, setImageOnly] = useState<boolean>(!!f.has_image_only)
 
   // Keep local market input in sync with global store when it changes from Toolbar
   useEffect(() => {
@@ -109,6 +122,20 @@ export default function FiltersPanel() {
   useEffect(() => {
     setMaxPrice(f.max_price !== undefined ? (f.max_price / 100).toString() : '')
   }, [f.max_price])
+  // Sync new filters
+  useEffect(() => { setCategory(f.category) }, [f.category])
+  useEffect(() => { setTypeVal(f.type ?? '') }, [f.type])
+  useEffect(() => { setRarity(f.rarity ?? '') }, [f.rarity])
+  useEffect(() => {
+    const di = Array.isArray(f.def_index)
+      ? f.def_index.join(',')
+      : f.def_index !== undefined
+      ? String(f.def_index)
+      : ''
+    setDefIndexInput(di)
+  }, [f.def_index])
+  useEffect(() => { setUserId(f.user_id ?? '') }, [f.user_id])
+  useEffect(() => { setImageOnly(!!f.has_image_only) }, [f.has_image_only])
 
   const wearOptions = useMemo(
     () => [
@@ -123,6 +150,22 @@ export default function FiltersPanel() {
 
   const isWearActive = (wear: { min: number; max: number }) =>
     (minFloat?.trim() || '') === String(wear.min) && (maxFloat?.trim() || '') === String(wear.max)
+
+  // Rarity options (API expects an integer code). Nota: estos códigos pueden variar por API.
+  // Si detectamos divergencias, los ajustamos rápidamente.
+  const rarityOptions = useMemo(
+    () => [
+      { value: '', label: 'Cualquiera' },
+      { value: '1', label: 'Consumer' },
+      { value: '2', label: 'Industrial' },
+      { value: '3', label: 'Mil-Spec' },
+      { value: '4', label: 'Restricted' },
+      { value: '5', label: 'Classified' },
+      { value: '6', label: 'Covert' },
+      { value: '7', label: 'Contraband' },
+    ],
+    []
+  )
 
   // Presets expressed in USD
   const priceRangesUsd = [
@@ -178,6 +221,17 @@ export default function FiltersPanel() {
   }
 
   const handleApply = () => {
+    // Parse def_index from input → number | number[] | undefined
+    const parseDefIndex = (v: string): number | number[] | undefined => {
+      const s = (v ?? '').trim()
+      if (!s) return undefined
+      const parts = s.split(/[,\s]+/).map((t) => t.trim()).filter(Boolean)
+      const nums = parts.map((p) => Number(p)).filter((n) => Number.isFinite(n) && n >= 0)
+      if (nums.length === 0) return undefined
+      if (nums.length === 1) return Math.floor(nums[0]!)
+      return Array.from(new Set(nums.map((n) => Math.floor(n))))
+    }
+
     f.patch({
       market_hash_name: market || undefined,
       min_price: parseUsdToCentsOpt(minPrice),
@@ -188,6 +242,13 @@ export default function FiltersPanel() {
       paint_index: parseIntOpt(paintIndex),
       collection: collection || undefined,
       stickers: stickers || undefined,
+      // new
+      category: category,
+      type: typeVal || undefined,
+      rarity: (rarity ?? '').trim() || undefined,
+      def_index: parseDefIndex(defIndexInput),
+      user_id: (userId ?? '').trim() || undefined,
+      has_image_only: imageOnly || undefined,
     })
     f.apply()
   }
@@ -202,10 +263,16 @@ export default function FiltersPanel() {
     setPaintIndex('')
     setCollection('')
     setStickers('')
+    setCategory(undefined)
+    setTypeVal('')
+    setRarity('')
+    setDefIndexInput('')
+    setUserId('')
+    setImageOnly(false)
     f.reset()
   }
 
-  const hasActiveFilters = market || minPrice || maxPrice || minFloat || maxFloat || paintSeed || paintIndex || collection || stickers
+  const hasActiveFilters = market || minPrice || maxPrice || minFloat || maxFloat || paintSeed || paintIndex || collection || stickers || category !== undefined || typeVal || rarity || defIndexInput || userId || imageOnly
 
   return (
     <div className="h-full flex flex-col">
@@ -243,6 +310,84 @@ export default function FiltersPanel() {
               />
             </div>
             <p className="text-xs text-muted-foreground">Search by exact weapon name</p>
+          </div>
+        </FilterSection>
+
+        {/* Category */}
+        <FilterSection title="Category" icon={<Filter size={18} />}>
+          <div className="flex flex-wrap gap-2">
+            <QuickFilterChip label="Any" active={category === undefined} onClick={() => setCategory(undefined)} />
+            <QuickFilterChip label="Normal" active={category === 1} onClick={() => setCategory(1)} />
+            <QuickFilterChip label="StatTrak™" active={category === 2} onClick={() => setCategory(2)} />
+            <QuickFilterChip label="Souvenir" active={category === 3} onClick={() => setCategory(3)} />
+          </div>
+        </FilterSection>
+
+        {/* Listing Type */}
+        <FilterSection title="Listing Type" icon={<Filter size={18} />}>
+          <div className="flex flex-wrap gap-2">
+            <QuickFilterChip label="Any" active={!typeVal} onClick={() => setTypeVal('')} />
+            <QuickFilterChip label="Buy Now" active={typeVal === 'buy_now'} onClick={() => setTypeVal('buy_now')} />
+            <QuickFilterChip label="Auction" active={typeVal === 'auction'} onClick={() => setTypeVal('auction')} />
+          </div>
+        </FilterSection>
+
+        {/* Rarity */}
+        <FilterSection title="Rarity" icon={<Star size={18} />}>
+          <div className="space-y-2">
+            <select
+              className="input w-full py-2"
+              value={rarity}
+              onChange={(e) => setRarity(e.target.value)}
+            >
+              {rarityOptions.map((o) => (
+                <option key={o.value || 'any'} value={o.value} className="bg-surface-1">
+                  {o.label}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-muted-foreground">El valor se envía como código numérico esperado por la API.</p>
+          </div>
+        </FilterSection>
+
+        {/* Weapon (def_index) */}
+        <FilterSection title="Weapon (def_index)" icon={<Filter size={18} />}>
+          <div className="space-y-2">
+            <input
+              className="input w-full py-2 font-mono"
+              placeholder="e.g., 7 o 7,9,16"
+              value={defIndexInput}
+              onChange={(e) => setDefIndexInput(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">Puede ser uno o varios valores separados por coma o espacio.</p>
+          </div>
+        </FilterSection>
+
+        {/* Seller (SteamID64) */}
+        <FilterSection title="Seller" icon={<Tag size={18} />} defaultExpanded={false}>
+          <div className="space-y-2">
+            <input
+              className="input w-full py-2 font-mono"
+              placeholder="SteamID64"
+              value={userId}
+              onChange={(e) => setUserId(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">Filtra por vendedor exacto (user_id).</p>
+          </div>
+        </FilterSection>
+
+        {/* Media */}
+        <FilterSection title="Media" icon={<Star size={18} />} defaultExpanded={false}>
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={imageOnly}
+                onChange={(e) => setImageOnly(e.target.checked)}
+              />
+              <span>Mostrar solo items con imagen</span>
+            </label>
+            <p className="text-xs text-muted-foreground">Filtro del lado del cliente: icon_url o screenshot disponible.</p>
           </div>
         </FilterSection>
 

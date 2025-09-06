@@ -26,21 +26,24 @@ const schema = z.object({
     .regex(stickersRegex, { message: 'Formato inválido. Use ID|POS[,ID|POS]' })
     .optional(),
   q: z.string().optional(),
+  // Client-side filters (no se envían a la API)
+  has_image_only: z.boolean().optional(),
 })
 
 type FiltersState = ListingsParams & {
+  has_image_only?: boolean
   appliedAt: number
   errors: Record<string, string>
   setSortBy: (s: SortOption) => void
   setMarketHashName: (v: string) => void
   setLimit: (n: number) => void
-  patch: (p: Partial<ListingsParams>) => void
+  patch: (p: Partial<FiltersState>) => void
   reset: () => void
   apply: () => void
   getParams: () => ListingsParams
 }
 
-type FiltersData = ListingsParams & { appliedAt: number; errors: Record<string, string> }
+type FiltersData = ListingsParams & { has_image_only?: boolean; appliedAt: number; errors: Record<string, string> }
 
 const initialData: FiltersData = {
   limit: 50,
